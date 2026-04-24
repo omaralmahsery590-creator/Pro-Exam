@@ -12,16 +12,20 @@ namespace pro_exam.email_service
             _smtpClient = new SmtpClient("smtp.gmail.com")
             {
                 Port = 587,
-                Credentials = new NetworkCredential("y.alshyoukh@gmail.com", "esctfdqiepyqrugo"),
+                Credentials = new NetworkCredential("itcollegeschedule@gmail.com", "ivnj iotd krvd bclg"),
                 EnableSsl = true,
             };
         }
 
         public async Task SendVerificationEmailAsync(string email, string verificationCode)
         {
+            email = email.Trim();
+            if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+                throw new ArgumentException($"Invalid email address: '{email}'", nameof(email));
+
             var mailMessage = new MailMessage
             {
-                From = new MailAddress("y.alshyoukh@gmail.com"),
+                From = new MailAddress("itcollegeschedule@gmail.com"),
                 Subject = "Email Verification",
                 Body = $"Your verification code is: {verificationCode}",
                 IsBodyHtml = false,
@@ -34,9 +38,10 @@ namespace pro_exam.email_service
 
         public async Task SendPasswordAsync(string email, string Password)
         {
+            email = email.Trim();
             var mailMessage = new MailMessage
             {
-                From = new MailAddress("y.alshyoukh@gmail.com"),
+                From = new MailAddress("itcollegeschedule@gmail.com"),
                 Subject = "Email Verification",
                 Body = $"Your Password is: {Password}",
                 IsBodyHtml = false,
@@ -49,9 +54,10 @@ namespace pro_exam.email_service
 
         public async Task SendForgetpassworodAsync(string email, string verificationCode)
         {
+            email = email.Trim();
             var mailMessage = new MailMessage
             {
-                From = new MailAddress("y.alshyoukh@gmail.com"),
+                From = new MailAddress("itcollegeschedule@gmail.com"),
                 Subject = "For Get Password",
                 Body = $"Your verification code is: {verificationCode}",
                 IsBodyHtml = false,
@@ -64,9 +70,10 @@ namespace pro_exam.email_service
 
         public async Task SendStatus(string email, string body)
         {
+            email = email.Trim();
             var mailMessage = new MailMessage
             {
-                From = new MailAddress("y.alshyoukh@gmail.com"),
+                From = new MailAddress("itcollegeschedule@gmail.com"),
                 Subject = "Respond to the joining request",
                 Body = body,
                 IsBodyHtml = false,

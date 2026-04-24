@@ -55,7 +55,7 @@ namespace pro_exam.Controllers
 
                 HttpContext.Session.SetString("token", datamapping.Tokcen);
 
-                return RedirectToAction("DoctorsWithSchedules", "Doctor");
+                return RedirectToAction("ExamDashBoard", "Exam");
             }
             catch (Exception ex)
             {
@@ -79,14 +79,19 @@ namespace pro_exam.Controllers
         public async Task<IActionResult> UserCode()
         {
             var User = await _context.Users.FindAsync(1);
-      
+
+            if (User == null || string.IsNullOrWhiteSpace(User.Email))
+            {
+                ViewBag.ErrorMessage = "User not found or email is not configured.";
+                return View("Login");
+            }
+
             User.OTP = GenerateOTP(6);
             User.OTPExpirationTime = DateTime.Now.AddMinutes(2);
             _context.Users.Update(User);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             await mail.SendVerificationEmailAsync(User.Email, User.OTP);
             return RedirectToAction("Login", "Auth");
-
         }
 
         // Generate OTP
