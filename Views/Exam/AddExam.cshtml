@@ -1,30 +1,42 @@
-﻿@model pro_exam.Models.Exam
+@model pro_exam.Models.Exam
+@using pro_exam.Models
+
 <div class="container mt-5">
     <h2>Add New Exam</h2>
     <form asp-action="AddExam" method="post">
-        <div class="form-group">
-            <label>Course Name</label>
-            <input asp-for="CourseName" class="form-control" />
-        </div>
-        <div class="form-group">
-            <label>Day</label>
-            <select asp-for="Day" class="form-control">
-                <option value="">Select Day</option>
-                <option value="Sunday">Sunday</option>
-                <option value="Monday">Monday</option>
-                <option value="Tuesday">Tuesday</option>
-                <option value="Wednesday">Wednesday</option>
-                <option value="Thursday">Thursday</option>
+        <div class="form-group mb-3">
+            <label>Course</label>
+            <select asp-for="CourseId" class="form-control" required>
+                <option value="">Select Course</option>
+                @foreach (var course in (IEnumerable<Course>)ViewBag.Courses)
+                {
+                    <option value="@course.Id">@course.CourseName</option>
+                }
             </select>
         </div>
-        <div class="form-group">
-            <label>Start Exam Time</label>
-            <input asp-for="StartExamTime" type="time" class="form-control" />
+        <div class="form-group mb-3">
+            <label>Room</label>
+            <select asp-for="RoomId" class="form-control" required>
+                <option value="">Select Room</option>
+                @foreach (var room in (IEnumerable<Room>)ViewBag.Rooms)
+                {
+                    <option value="@room.Id">@room.Name (Capacity: @room.Capacity)</option>
+                }
+            </select>
         </div>
-        <div class="form-group">
-            <label>End Exam Time</label>
-            <input asp-for="EndExamTime" type="time" class="form-control" />
+        <div class="form-group mb-3">
+            <label>Exam Date</label>
+            <input asp-for="ExamDate" type="date" class="form-control" required />
+        </div>
+        <div class="form-group mb-3">
+            <label>Start Time</label>
+            <input asp-for="StartTime" type="time" class="form-control" required />
+        </div>
+        <div class="form-group mb-3">
+            <label>End Time</label>
+            <input asp-for="EndTime" type="time" class="form-control" required />
         </div>
         <button type="submit" class="btn btn-success">Add Exam</button>
+        <a href="@Url.Action("ExamDashBoard", "Exam")" class="btn btn-secondary">Cancel</a>
     </form>
 </div>

@@ -1,14 +1,22 @@
-﻿namespace pro_exam.Models
+using System.ComponentModel.DataAnnotations;
+
+namespace pro_exam.Models
 {
     public class Exam
     {
         public int Id { get; set; }
-        
-        public string CourseName { get; set; }
-        public string Day { get; set; } // يوم العمل
-        public TimeSpan StartExamTime { get; set; }
-        public TimeSpan EndExamTime { get; set; }
 
-        //public int DoctorId { get; set; }
+        public int CourseId { get; set; }
+        public Course Course { get; set; }
+
+        public int RoomId { get; set; }
+        public Room Room { get; set; }
+
+        [Required]
+        public DateTime ExamDate { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
+
+        public ICollection<Montering> Monitorings { get; set; }
     }
 }

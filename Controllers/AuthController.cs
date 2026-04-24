@@ -34,7 +34,7 @@ namespace pro_exam.Controllers
             {
                 // Retrieve the user by EmployeeNumber
                 //var hashedpassword = BCrypt.Net.BCrypt.HashPassword(loginModel.Password);
-                var user = await _context.User.Where(x => x.Email == Email && x.OTP == OTP).SingleOrDefaultAsync();
+                var user = await _context.Users.Where(x => x.Email == Email && x.OTP == OTP).SingleOrDefaultAsync();
                 if (user == null)
                 {
                     ViewBag.ErrorMessage = "Email or Password not Correct";
@@ -78,11 +78,11 @@ namespace pro_exam.Controllers
         [HttpPost]
         public async Task<IActionResult> UserCode()
         {
-            var User = await _context.User.FindAsync(1);
+            var User = await _context.Users.FindAsync(1);
       
             User.OTP = GenerateOTP(6);
             User.OTPExpirationTime = DateTime.Now.AddMinutes(2);
-            _context.User.Update(User);
+            _context.Users.Update(User);
             _context.SaveChanges();
             await mail.SendVerificationEmailAsync(User.Email, User.OTP);
             return RedirectToAction("Login", "Auth");

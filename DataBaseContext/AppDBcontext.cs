@@ -1,49 +1,74 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using pro_exam.Models;
 
 namespace pro_exam.DataBaseContext
 {
     public class AppDBcontext : DbContext
     {
-        public AppDBcontext(DbContextOptions options) : base(options)
+        public AppDBcontext(DbContextOptions<AppDBcontext> options) : base(options)
         {}
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-
         {
-
+            // Unique constraint on DoctorName
             modelBuilder.Entity<Doctor>()
-           .HasIndex(u => u.DoctorName)
-           .IsUnique();
+                .HasIndex(d => d.DoctorName)
+                .IsUnique();
 
-            // العلاقة بين Doctor و Monitoring (1-to-Many)
-            modelBuilder.Entity<Doctor>()
-                .HasMany(d => d.Monitorings)
-                .WithOne(m => m.Doctors)
-                .HasForeignKey(m => m.DoctorId)
-                .OnDelete(DeleteBehavior.Cascade); // حذف المراقبات عند حذف الطبيب
+            // Student <-> Course (Many-to-Many via StudentCourse)
+            modelBuilder.Entity<StudentCourse>()
+                .HasOne(sc => sc.Student)
+                .WithMany(s => s.RegisteredCourses)
+                .HasForeignKey(sc => sc.StudentId);
 
-            // العلاقة بين Schedule و Monitoring (1-to-Many)
-            modelBuilder.Entity<Schedule>()
-                .HasMany(s => s.Monitorings)
-                .WithOne(m => m.Schedule)
-                .HasForeignKey(m => m.ScheduleId)
-                .OnDelete(DeleteBehavior.Cascade); // حذف المراقبات عند حذف الجدول
+            modelBuilder.Entity<StudentCourse>()
+                .HasOne(sc => sc.Course)
+                .WithMany(c => c.EnrolledStudents)
+                .HasForeignKey(sc => sc.CourseId);
 
-            // العلاقة بين Monitoring و Doctor-Schedule (Many-to-Many عبر جدول مركب)
+            // Course -> Doctor (Many-to-One, restrict delete to protect courses when doctor is removed)
+            modelBuilder.Entity<Course>()
+                .HasOne(c => c.Doctor)
+                .WithMany(d => d.Courses)
+                .HasForeignKey(c => c.DoctorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Exam -> Course
+            modelBuilder.Entity<Exam>()
+                .HasOne(e => e.Course)
+                .WithMany()
+                .HasForeignKey(e => e.CourseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Exam -> Room
+            modelBuilder.Entity<Exam>()
+                .HasOne(e => e.Room)
+                .WithMany()
+                .HasForeignKey(e => e.RoomId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Montering -> Doctor (proctoring assignment)
             modelBuilder.Entity<Montering>()
-                .HasKey(m => new { m.DoctorId, m.ScheduleId }); // تعريف المفتاح المركب
+                .HasOne(m => m.Doctor)
+                .WithMany(d => d.Monitorings)
+                .HasForeignKey(m => m.DoctorId)
+                .OnDelete(DeleteBehavior.Cascade);
 
+            // Montering -> Exam
+            modelBuilder.Entity<Montering>()
+                .HasOne(m => m.Exam)
+                .WithMany(e => e.Monitorings)
+                .HasForeignKey(m => m.ExamId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
-        public DbSet <Doctor> Doctors { get; set; }
-        public DbSet<Schedule> Schedules { get; set; }
-        public DbSet<User> User { get; set; }
-        public DbSet<Montering> Montering { get; set; }
+        public DbSet<Doctor> Doctors { get; set; }
+        public DbSet<Student> Students { get; set; }
+        public DbSet<Course> Courses { get; set; }
+        public DbSet<StudentCourse> StudentCourses { get; set; }
+        public DbSet<Room> Rooms { get; set; }
         public DbSet<Exam> Exams { get; set; }
-        public DbSet<DoctorFreeTime> DoctorFreeTimes { get; set; }
-
-
-
+        public DbSet<Montering> Monterings { get; set; }
+        public DbSet<User> Users { get; set; }
     }
 }
-

@@ -1,13 +1,11 @@
-﻿using ExcelDataReader;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
 using pro_exam.DataBaseContext;
 using pro_exam.Models;
 using pro_exam.ViewModel;
-using OfficeOpenXml;
-
 
 namespace pro_exam.Controllers
 {
@@ -20,43 +18,31 @@ namespace pro_exam.Controllers
         {
             _context = context;
         }
-        // عرض قائمة جميع الامتحانات
+
         public IActionResult ExamDashBoard()
         {
-            var examsWithDoctors = _context.Exams
+            var exams = _context.Exams
+                .Include(e => e.Course)
+                .Include(e => e.Room)
+                .Include(e => e.Monitorings).ThenInclude(m => m.Doctor)
                 .Select(exam => new ExamWithAvailableDoctorsViewModel
                 {
                     ExamId = exam.Id,
-                    CourseName = exam.CourseName,
-                    Day = exam.Day,
-                    StartExamTime = exam.StartExamTime,
-                    EndExamTime = exam.EndExamTime,
-                    AvailableDoctors = _context.DoctorFreeTimes
-                        .Where(freeTime =>
-                            freeTime.Day == exam.Day && // مقارنة يوم الامتحان مع يوم الفراغ
-                            freeTime.StartFreeTime <= exam.StartExamTime && // وقت بداية الفراغ يغطي بداية الامتحان
-                            freeTime.EndFreeTime >= exam.EndExamTime) // وقت نهاية الفراغ يغطي نهاية الامتحان
-                        .Select(ft => ft.DoctorName) // جلب أسماء الدكاترة المتاحين
-                        .ToList()
+                    CourseName = exam.Course.CourseName,
+                    ExamDate = exam.ExamDate,
+                    StartTime = exam.StartTime,
+                    EndTime = exam.EndTime,
+                    RoomName = exam.Room.Name,
+                    AssignedDoctors = exam.Monitorings.Select(m => m.Doctor.DoctorName).ToList()
                 }).ToList();
 
-            return View(examsWithDoctors);
+            return View(exams);
         }
-
-
-
-
-
-
-
-
-
-
-
-
 
         public IActionResult AddExam()
         {
+            ViewBag.Courses = _context.Courses.ToList();
+            ViewBag.Rooms = _context.Rooms.ToList();
             return View();
         }
 
@@ -70,6 +56,8 @@ namespace pro_exam.Controllers
                 TempData["SuccessMessage"] = "Exam added successfully!";
                 return RedirectToAction("ExamDashBoard");
             }
+            ViewBag.Courses = _context.Courses.ToList();
+            ViewBag.Rooms = _context.Rooms.ToList();
             return View(exam);
         }
 
@@ -77,6 +65,8 @@ namespace pro_exam.Controllers
         {
             var exam = _context.Exams.Find(id);
             if (exam == null) return NotFound();
+            ViewBag.Courses = _context.Courses.ToList();
+            ViewBag.Rooms = _context.Rooms.ToList();
             return View(exam);
         }
 
@@ -90,6 +80,8 @@ namespace pro_exam.Controllers
                 TempData["SuccessMessage"] = "Exam updated successfully!";
                 return RedirectToAction("ExamDashBoard");
             }
+            ViewBag.Courses = _context.Courses.ToList();
+            ViewBag.Rooms = _context.Rooms.ToList();
             return View(exam);
         }
 
@@ -103,176 +95,64 @@ namespace pro_exam.Controllers
             return RedirectToAction("ExamDashBoard");
         }
 
-
-
-
-
-        //  database اضافة الصفحة اكسل على ال 
-
-        [HttpPost]
-        public async Task<IActionResult> ExcelFileReader(IFormFile file)
-        {
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-            if (file != null && file.Length > 0)
-            {
-                var uploadDirectory = $"{Directory.GetCurrentDirectory()}\\wwwroot\\Uploads";
-                if (!Directory.Exists(uploadDirectory))
-                {
-                    Directory.CreateDirectory(uploadDirectory);
-                }
-
-                var filePath = Path.Combine(uploadDirectory, file.FileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-
-                // قراءة الملف وتخزين البيانات في قاعدة البيانات
-                using (var stream = System.IO.File.Open(filePath, FileMode.Open, FileAccess.Read))
-                {
-                    using (var reader = ExcelReaderFactory.CreateReader(stream))
-                    {
-                        while (reader.Read())
-                        {
-                            // تخطي الصف الأول إذا كان يحتوي على رؤوس الأعمدة
-                            if (reader.Depth == 0) continue;
-
-                            // قراءة البيانات من كل عمود
-                            var CourseName = reader.GetValue(0)?.ToString();
-                            var Day = reader.GetValue(1)?.ToString();
-                            var StartExamTime = TimeSpan.Parse(reader.GetValue(2)?.ToString());
-                            var EndExamTime = TimeSpan.Parse(reader.GetValue(3)?.ToString());
-
-                            // التحقق من صحة البيانات
-                            if (string.IsNullOrEmpty(CourseName) || string.IsNullOrEmpty(Day))
-                                continue;
-
-                            // حفظ البيانات في قاعدة البيانات
-                            await SaveRecordToDatabase(CourseName, Day, StartExamTime, EndExamTime);
-                        }
-                    }
-                }
-            }
-
-            return RedirectToAction("ExamDashBoard"); // أو عرض رسالة نجاح
-        }
-
-        private async Task SaveRecordToDatabase(string CourseName, string Day, TimeSpan StartExamTime, TimeSpan EndExamTime)
-        {
-
-
-            // إنشاء جدول زمني جديد
-            var exam = new Exam
-            {
-                CourseName = CourseName,
-                Day = Day,
-                StartExamTime = StartExamTime,
-                EndExamTime = EndExamTime
-            };
-            _context.Exams.Add(exam);
-            await _context.SaveChangesAsync();
-
-        }
-
-
         [HttpPost]
         public IActionResult ResetDatabase()
         {
             try
             {
-                // حذف جميع البيانات من الجداول            
                 _context.Exams.RemoveRange(_context.Exams);
-                _context.DoctorFreeTimes.RemoveRange(_context.DoctorFreeTimes);
-
-                // حفظ التغييرات
                 _context.SaveChanges();
-
-                // إضافة رسالة نجاح
                 TempData["SuccessMessage"] = "Database has been reset successfully!";
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"An error occurred while resetting the database: {ex.Message}";
+                TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
             }
-
-            return RedirectToAction("Index"); // استبدل بـ الصفحة المناسبة
+            return RedirectToAction("ExamDashBoard");
         }
-
-
-
-
-
 
         [HttpGet]
         public IActionResult GenerateExamReport()
         {
-            var examsWithDoctors = _context.Exams
-                .Select(exam => new ExamWithAvailableDoctorsViewModel
-                {
-                    ExamId = exam.Id,
-                    CourseName = exam.CourseName,
-                    Day = exam.Day,
-                    StartExamTime = exam.StartExamTime,
-                    EndExamTime = exam.EndExamTime,
-                    AvailableDoctors = _context.Doctors
-                        .Where(doctor => doctor.Monitorings.Any(m =>
-                            m.Schedule.Day == exam.Day &&
-                            m.Schedule.StartTime <= exam.StartExamTime &&
-                            m.Schedule.EndTime >= exam.EndExamTime))
-                        .Select(d => d.DoctorName)
-                        .ToList()
-                }).ToList();
+            var exams = _context.Exams
+                .Include(e => e.Course)
+                .Include(e => e.Room)
+                .Include(e => e.Monitorings).ThenInclude(m => m.Doctor)
+                .ToList();
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            using (var package = new ExcelPackage())
+            using var package = new ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("Exam Report");
+
+            worksheet.Cells[1, 1].Value = "Exam ID";
+            worksheet.Cells[1, 2].Value = "Course Name";
+            worksheet.Cells[1, 3].Value = "Room";
+            worksheet.Cells[1, 4].Value = "Exam Date";
+            worksheet.Cells[1, 5].Value = "Start Time";
+            worksheet.Cells[1, 6].Value = "End Time";
+            worksheet.Cells[1, 7].Value = "Assigned Doctors";
+
+            int row = 2;
+            foreach (var exam in exams)
             {
-                var worksheet = package.Workbook.Worksheets.Add("Exam Report");
-
-                // Add Headers
-                worksheet.Cells[1, 1].Value = "Exam ID";
-                worksheet.Cells[1, 2].Value = "Course Name";
-                worksheet.Cells[1, 3].Value = "Day";
-                worksheet.Cells[1, 4].Value = "Start Time";
-                worksheet.Cells[1, 5].Value = "End Time";
-                worksheet.Cells[1, 6].Value = "Available Doctors";
-
-                // Add Data
-                int row = 2;
-                foreach (var exam in examsWithDoctors)
-                {
-                    worksheet.Cells[row, 1].Value = exam.ExamId;
-                    worksheet.Cells[row, 2].Value = exam.CourseName;
-                    worksheet.Cells[row, 3].Value = exam.Day;
-                    worksheet.Cells[row, 4].Value = exam.StartExamTime.ToString(@"hh\:mm");
-                    worksheet.Cells[row, 5].Value = exam.EndExamTime.ToString(@"hh\:mm");
-                    worksheet.Cells[row, 6].Value = string.Join(", ", _context.DoctorFreeTimes
-                        .Where(freeTime =>
-                            freeTime.Day == exam.Day && // مقارنة يوم الامتحان مع يوم الفراغ
-                            freeTime.StartFreeTime <= exam.StartExamTime && // وقت بداية الفراغ يغطي بداية الامتحان
-                            freeTime.EndFreeTime >= exam.EndExamTime) // وقت نهاية الفراغ يغطي نهاية الامتحان
-                        .Select(ft => ft.DoctorName) // جلب أسماء الدكاترة المتاحين
-                        .ToList());
-
-                    row++;
-                }
-
-                // Auto-fit columns
-                worksheet.Cells.AutoFitColumns();
-
-                // Generate File
-                var stream = new MemoryStream();
-                package.SaveAs(stream);
-                stream.Position = 0;
-
-                string fileName = "Exam_Report.xlsx";
-                string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-                return File(stream, contentType, fileName);
+                worksheet.Cells[row, 1].Value = exam.Id;
+                worksheet.Cells[row, 2].Value = exam.Course?.CourseName;
+                worksheet.Cells[row, 3].Value = exam.Room?.Name;
+                worksheet.Cells[row, 4].Value = exam.ExamDate.ToString("yyyy-MM-dd");
+                worksheet.Cells[row, 5].Value = exam.StartTime.ToString(@"hh\:mm");
+                worksheet.Cells[row, 6].Value = exam.EndTime.ToString(@"hh\:mm");
+                worksheet.Cells[row, 7].Value = string.Join(", ", exam.Monitorings.Select(m => m.Doctor.DoctorName));
+                row++;
             }
 
+            worksheet.Cells.AutoFitColumns();
 
+            var stream = new MemoryStream();
+            package.SaveAs(stream);
+            stream.Position = 0;
+
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Exam_Report.xlsx");
         }
-        }
+    }
 }
