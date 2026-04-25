@@ -26,18 +26,16 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Doctor" asp-action="AddNewDoctor">Add New Doctor</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Schdual" asp-action="Createschedule">AddSchedule </a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Exam" asp-action="AddExam">Add New Exam </a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Doctor" asp-action="DoctorsWithSchedules">Get Free Time</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Doctor" asp-action="DoctorsWithSchedules">View Level Course</a>
                         </li> 
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Doctor" asp-action="FreeTimeView">View Free Time</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Exam" asp-action="ExamDashBoard">View Schedule</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Exam" asp-action="ExamDashBoard">Exams</a>
-                        </li>
+                        
                         <li class="nav-item">
 @*                             <a class="nav-link text-dark" asp-area="" asp-controller="Auth" asp-action="Login">Logout</a>
  *@                            <form asp-action="Logout" asp-controller="Auth">

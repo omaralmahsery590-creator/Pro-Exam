@@ -11,9 +11,7 @@ namespace pro_exam.Models
         public string Specialization { get; set; }
         public int NumberOfStudents { get; set; }
 
-        public int DoctorId { get; set; }
-        public Doctor Doctor { get; set; }
-
+        public ICollection<DoctorCourse> DoctorCourses { get; set; }
         public ICollection<StudentCourse> EnrolledStudents { get; set; }
     }
 }

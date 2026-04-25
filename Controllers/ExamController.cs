@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -58,7 +58,7 @@ namespace pro_exam.Controllers
             }
             ViewBag.Courses = _context.Courses.ToList();
             ViewBag.Rooms = _context.Rooms.ToList();
-            return View(exam);
+            return View("Exam");
         }
 
         public IActionResult EditExam(int id)

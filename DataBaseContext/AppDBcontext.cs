@@ -26,12 +26,21 @@ namespace pro_exam.DataBaseContext
                 .WithMany(c => c.EnrolledStudents)
                 .HasForeignKey(sc => sc.CourseId);
 
-            // Course -> Doctor (Many-to-One, restrict delete to protect courses when doctor is removed)
-            modelBuilder.Entity<Course>()
-                .HasOne(c => c.Doctor)
-                .WithMany(d => d.Courses)
-                .HasForeignKey(c => c.DoctorId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // Doctor <-> Course (Many-to-Many via DoctorCourse)
+            modelBuilder.Entity<DoctorCourse>()
+                .HasKey(dc => new { dc.DoctorId, dc.CourseId });
+
+            modelBuilder.Entity<DoctorCourse>()
+                .HasOne(dc => dc.Doctor)
+                .WithMany(d => d.DoctorCourses)
+                .HasForeignKey(dc => dc.DoctorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DoctorCourse>()
+                .HasOne(dc => dc.Course)
+                .WithMany(c => c.DoctorCourses)
+                .HasForeignKey(dc => dc.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Exam -> Course
             modelBuilder.Entity<Exam>()
@@ -66,6 +75,7 @@ namespace pro_exam.DataBaseContext
         public DbSet<Student> Students { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<StudentCourse> StudentCourses { get; set; }
+        public DbSet<DoctorCourse> DoctorCourses { get; set; }
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Exam> Exams { get; set; }
         public DbSet<Montering> Monterings { get; set; }

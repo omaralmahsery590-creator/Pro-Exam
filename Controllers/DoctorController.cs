@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using pro_exam.DataBaseContext;
 using pro_exam.Models;
+using pro_exam.ViewModel;
 
 namespace pro_exam.Controllers
 {
@@ -18,24 +21,102 @@ namespace pro_exam.Controllers
 
         public IActionResult AddNewDoctor()
         {
-            return View();
+            var rows = _context.DoctorCourses
+                .Include(dc => dc.Doctor)
+                .Include(dc => dc.Course)
+                .OrderBy(dc => dc.Doctor.DoctorName)
+                .ThenBy(dc => dc.Course.CourseName)
+                .Select(dc => new DoctorCourseRowViewModel
+                {
+                    DoctorId = dc.DoctorId,
+                    DoctorName = dc.Doctor.DoctorName,
+                    CourseId = dc.CourseId,
+                    CourseName = dc.Course.CourseName,
+                    Specialization = dc.Course.Specialization,
+                    Level = dc.Course.Level,
+                    NumberOfStudents = dc.Course.NumberOfStudents
+                })
+                .ToList();
+
+            return View(rows);
+        }
+
+        [HttpGet]
+        public IActionResult GetDoctorCourses(int doctorId)
+        {
+            var courseIds = _context.DoctorCourses
+                .Where(dc => dc.DoctorId == doctorId)
+                .Select(dc => dc.CourseId)
+                .ToList();
+
+            return Json(courseIds);
         }
 
         [HttpPost]
-        public IActionResult AddToDB(Doctor doctor)
+        public IActionResult AddDoctorCourse([FromBody] AddDoctorCourseRequest request)
         {
-            var existingDoctor = _context.Doctors.FirstOrDefault(d => d.DoctorName == doctor.DoctorName);
-            if (existingDoctor != null)
+            if (string.IsNullOrWhiteSpace(request?.DoctorName))
+                return Json(new { success = false, message = "يرجى إدخال اسم الدكتور" });
+            if (string.IsNullOrWhiteSpace(request?.CourseName))
+                return Json(new { success = false, message = "يرجى إدخال اسم المادة" });
+            if (string.IsNullOrWhiteSpace(request?.Specialization))
+                return Json(new { success = false, message = "يرجى اختيار التخصص" });
+            if (request.Level < 1 || request.Level > 4)
+                return Json(new { success = false, message = "يرجى اختيار مستوى صحيح" });
+
+            var doctorName = request.DoctorName.Trim();
+            var courseName = request.CourseName.Trim();
+            var specialization = request.Specialization.Trim();
+
+            Course course = null;
+            if (request.CourseId.HasValue && request.CourseId.Value > 0)
+                course = _context.Courses.FirstOrDefault(c => c.Id == request.CourseId.Value);
+
+            if (course == null)
+                course = _context.Courses.FirstOrDefault(c => c.CourseName == courseName);
+
+            if (course == null)
             {
-                TempData["ErrorMessage"] = "Doctor with the same name already exists!";
-                return RedirectToAction("AddNewDoctor");
+                course = new Course
+                {
+                    CourseName = courseName,
+                    Specialization = specialization,
+                    Level = request.Level,
+                    NumberOfStudents = request.StudentsCount
+                };
+                _context.Courses.Add(course);
+                _context.SaveChanges();
             }
 
-            _context.Doctors.Add(doctor);
+            var doctor = _context.Doctors.FirstOrDefault(d => d.DoctorName == doctorName);
+            if (doctor == null)
+            {
+                doctor = new Doctor { DoctorName = doctorName };
+                _context.Doctors.Add(doctor);
+                _context.SaveChanges();
+            }
+
+            bool exists = _context.DoctorCourses.Any(dc => dc.DoctorId == doctor.Id && dc.CourseId == course.Id);
+            if (exists)
+                return Json(new { success = false, isDuplicate = true, message = "هذه المادة مضافة مسبقاً لهذا الدكتور" });
+
+            _context.DoctorCourses.Add(new DoctorCourse { DoctorId = doctor.Id, CourseId = course.Id });
             _context.SaveChanges();
 
-            TempData["SuccessMessage"] = "Doctor has been added successfully!";
-            return RedirectToAction("AddNewDoctor");
+            return Json(new
+            {
+                success = true,
+                message = "تمت إضافة المادة بنجاح",
+                data = new
+                {
+                    doctorName = doctor.DoctorName,
+                    courseId = course.Id,
+                    courseName = course.CourseName,
+                    specialization = course.Specialization,
+                    level = course.Level,
+                    studentsCount = course.NumberOfStudents
+                }
+            });
         }
     }
 }

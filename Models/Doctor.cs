@@ -9,6 +9,6 @@ namespace pro_exam.Models
         public string DoctorName { get; set; }
 
         public ICollection<Montering> Monitorings { get; set; }
-        public ICollection<Course> Courses { get; set; }
+        public ICollection<DoctorCourse> DoctorCourses { get; set; }
     }
 }
