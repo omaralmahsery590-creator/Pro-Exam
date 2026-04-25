@@ -27,20 +27,13 @@
             box-shadow: 0 4px 18px rgba(13, 59, 112, 0.35);
         }
 
-        .page-header h3 {
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .page-header small {
-            opacity: 0.85;
-            font-size: 0.9rem;
-        }
+        .page-header h3 { font-weight: 700; margin-bottom: 4px; }
+        .page-header small { opacity: 0.85; font-size: 0.9rem; }
 
         .table-card {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 3px 18px rgba(0, 0, 0, 0.09);
+            box-shadow: 0 3px 18px rgba(0,0,0,0.09);
             padding: 24px;
         }
 
@@ -57,19 +50,10 @@
             vertical-align: middle;
         }
 
-        .table tbody tr:nth-child(odd) {
-            background-color: #eaf4fb;
-        }
+        .table tbody tr:nth-child(odd) { background-color: #eaf4fb; }
+        .table tbody tr:hover { background-color: #cce4f6; }
 
-        .table tbody tr:hover {
-            background-color: #cce4f6;
-        }
-
-        .row-num {
-            color: #888;
-            font-size: 0.85rem;
-            width: 50px;
-        }
+        .row-num { color: #888; font-size: 0.85rem; width: 50px; }
 
         .btn-add {
             background-color: #1e8449;
@@ -81,10 +65,7 @@
             transition: background-color 0.25s;
         }
 
-        .btn-add:hover {
-            background-color: #196f3d;
-            color: white;
-        }
+        .btn-add:hover { background-color: #196f3d; color: white; }
 
         .empty-state {
             text-align: center;
@@ -98,31 +79,36 @@
             color: #b0c4de;
         }
 
+        /* Modal header: title on the right (RTL start), X button on the left */
         .modal-header {
             background-color: #0d3b70;
             color: white;
             border-radius: 8px 8px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
+        .modal-header .modal-title { font-weight: 700; }
+
+        /* Force the close button to the left side in RTL */
         .modal-header .close {
             color: white;
             opacity: 0.9;
-        }
-
-        .modal-title {
-            font-weight: 700;
+            float: none;
+            margin: 0;
+            margin-right: auto !important;
+            margin-left: 0 !important;
+            order: -1;
         }
 
         .form-control:focus,
         .custom-select:focus {
             border-color: #1a6fa8;
-            box-shadow: 0 0 0 0.2rem rgba(26, 111, 168, 0.25);
+            box-shadow: 0 0 0 0.2rem rgba(26,111,168,0.25);
         }
 
-        label {
-            font-weight: 600;
-            color: #0d3b70;
-        }
+        label { font-weight: 600; color: #0d3b70; }
 
         #saveBtn {
             background-color: #1a6fa8;
@@ -131,9 +117,7 @@
             padding: 8px 28px;
         }
 
-        #saveBtn:hover {
-            background-color: #155d8f;
-        }
+        #saveBtn:hover { background-color: #155d8f; }
 
         .count-badge {
             background-color: rgba(255,255,255,0.2);
@@ -143,328 +127,477 @@
             margin-right: 10px;
         }
 
-        .badge-spec {
-            font-size: 0.8rem;
-            padding: 4px 10px;
-            border-radius: 12px;
-        }
-
+        .badge-spec { font-size: 0.8rem; padding: 4px 10px; border-radius: 12px; }
         .badge-CS  { background-color: #1a6fa8; color: white; }
         .badge-CY  { background-color: #117a65; color: white; }
         .badge-AI  { background-color: #7d3c98; color: white; }
+        .badge-CM  { background-color: #e67e22; color: white; }
+
+        .btn-action { padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; margin: 1px; }
     </style>
 </head>
 <body>
-    <div class="container-fluid mt-4 mb-5 px-4">
+<div class="container-fluid mt-4 mb-5 px-4">
 
-        <!-- Page Header -->
-        <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
-            <div>
-                <h3 class="mb-1">
-                    <i class="fas fa-chalkboard-teacher ml-2"></i>
-                    إدارة الدكاترة والمواد
-                </h3>
-                <small>عرض جميع الدكاترة والمواد التي يدرّسونها وإضافة جديد</small>
-            </div>
-            <div class="d-flex align-items-center mt-2 mt-sm-0">
-                <span class="count-badge">
-                    <i class="fas fa-list-ul ml-1"></i>
-                    <span id="rowCountBadge">@Model.Count</span> سجل
-                </span>
-                <button class="btn btn-add mr-2" data-toggle="modal" data-target="#addModal">
-                    <i class="fas fa-plus ml-1"></i>
-                    إضافة دكتور لمادة
-                </button>
-            </div>
+    <!-- Page Header -->
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-chalkboard-teacher ml-2"></i>
+                إدارة الدكاترة والمواد
+            </h3>
+            <small>عرض جميع الدكاترة والمواد التي يدرّسونها وإضافة جديد</small>
         </div>
-
-        <!-- Data Table Card -->
-        <div class="table-card">
-            @if (Model.Any())
-            {
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover mb-0" id="doctorTable">
-                        <thead>
-                            <tr>
-                                <th class="row-num">#</th>
-                                <th><i class="fas fa-user-md ml-1"></i> اسم الدكتور</th>
-                                <th><i class="fas fa-hashtag ml-1"></i> رقم المادة</th>
-                                <th><i class="fas fa-book ml-1"></i> اسم المادة</th>
-                                <th><i class="fas fa-tags ml-1"></i> التخصص</th>
-                                <th><i class="fas fa-layer-group ml-1"></i> المستوى</th>
-                                <th><i class="fas fa-users ml-1"></i> عدد الطلاب</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                            @{ int i = 1; }
-                            @foreach (var row in Model)
-                            {
-                                <tr>
-                                    <td class="row-num">@i</td>
-                                    <td>@row.DoctorName</td>
-                                    <td>@row.CourseId</td>
-                                    <td>@row.CourseName</td>
-                                    <td>
-                                        <span class="badge badge-spec badge-@row.Specialization">@row.Specialization</span>
-                                    </td>
-                                    <td>Level @row.Level</td>
-                                    <td>@row.NumberOfStudents</td>
-                                </tr>
-                                i++;
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-            else
-            {
-                <div class="empty-state" id="emptyState">
-                    <i class="fas fa-inbox d-block"></i>
-                    <p class="mb-0">لا توجد بيانات حتى الآن. ابدأ بإضافة دكتور ومادة.</p>
-                </div>
-                <div class="table-responsive" id="tableWrapper" style="display:none;">
-                    <table class="table table-bordered table-hover mb-0" id="doctorTable">
-                        <thead>
-                            <tr>
-                                <th class="row-num">#</th>
-                                <th><i class="fas fa-user-md ml-1"></i> اسم الدكتور</th>
-                                <th><i class="fas fa-hashtag ml-1"></i> رقم المادة</th>
-                                <th><i class="fas fa-book ml-1"></i> اسم المادة</th>
-                                <th><i class="fas fa-tags ml-1"></i> التخصص</th>
-                                <th><i class="fas fa-layer-group ml-1"></i> المستوى</th>
-                                <th><i class="fas fa-users ml-1"></i> عدد الطلاب</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody"></tbody>
-                    </table>
-                </div>
-            }
+        <div class="d-flex align-items-center mt-2 mt-sm-0">
+            <span class="count-badge">
+                <i class="fas fa-list-ul ml-1"></i>
+                <span id="rowCountBadge">@Model.Count</span> سجل
+            </span>
+            <button class="btn btn-add mr-2" id="btnOpenAdd">
+                <i class="fas fa-plus ml-1"></i>
+                إضافة دكتور لمادة
+            </button>
         </div>
     </div>
 
-    <!-- Add Modal -->
-    <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-            <div class="modal-content" style="border-radius: 10px; overflow: hidden;">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addModalLabel">
-                        <i class="fas fa-user-plus ml-2"></i>
-                        إضافة دكتور لمادة
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+    <!-- Data Table Card -->
+    <div class="table-card">
+        <div class="empty-state" id="emptyState" style="@(Model.Any() ? "display:none;" : "")">
+            <i class="fas fa-inbox d-block"></i>
+            <p class="mb-0">لا توجد بيانات حتى الآن. ابدأ بإضافة دكتور ومادة.</p>
+        </div>
+
+        <div class="table-responsive" id="tableWrapper" style="@(!Model.Any() ? "display:none;" : "")">
+            <table class="table table-bordered table-hover mb-0" id="doctorTable">
+                <thead>
+                    <tr>
+                        <th class="row-num">#</th>
+                        <th><i class="fas fa-user-md ml-1"></i> اسم الدكتور</th>
+                        <th><i class="fas fa-hashtag ml-1"></i> رقم المادة</th>
+                        <th><i class="fas fa-book ml-1"></i> اسم المادة</th>
+                        <th><i class="fas fa-tags ml-1"></i> التخصص</th>
+                        <th><i class="fas fa-layer-group ml-1"></i> المستوى</th>
+                        <th><i class="fas fa-users ml-1"></i> عدد الطلاب</th>
+                        <th><i class="fas fa-cogs ml-1"></i> العمليات</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    @{ int i = 1; }
+                    @foreach (var row in Model)
+                    {
+                        <tr data-doctor-id="@row.DoctorId"
+                            data-course-id="@row.CourseId"
+                            data-doctor-name="@Html.Raw(System.Web.HttpUtility.HtmlAttributeEncode(row.DoctorName))"
+                            data-course-name="@Html.Raw(System.Web.HttpUtility.HtmlAttributeEncode(row.CourseName))"
+                            data-specialization="@row.Specialization"
+                            data-level="@row.Level"
+                            data-students-count="@row.NumberOfStudents">
+                            <td class="row-num">@i</td>
+                            <td>@row.DoctorName</td>
+                            <td>@row.CourseId</td>
+                            <td>@row.CourseName</td>
+                            <td><span class="badge badge-spec badge-@row.Specialization">@row.Specialization</span></td>
+                            <td>Level @row.Level</td>
+                            <td>@row.NumberOfStudents</td>
+                            <td>
+                                <button class="btn btn-warning btn-action btn-edit" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-danger btn-action btn-delete" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        i++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius:10px; overflow:hidden;">
+
+            <div class="modal-header">
+                <!-- X on the LEFT in RTL (order:-1 + margin-right:auto) -->
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h5 class="modal-title" id="addModalLabel">
+                    <i id="modalIcon" class="fas fa-user-plus ml-2"></i>
+                    <span id="modalTitleText">إضافة دكتور لمادة</span>
+                </h5>
+            </div>
+
+            <div class="modal-body" style="padding:28px;">
+
+                <!-- Doctor Name -->
+                <div class="form-group">
+                    <label for="inputDoctorName">
+                        <i class="fas fa-user-md ml-1"></i> اسم الدكتور
+                    </label>
+                    <input type="text" id="inputDoctorName" class="form-control"
+                           placeholder="أدخل اسم الدكتور" autocomplete="off">
+                    <small class="form-text text-muted">إذا لم يكن الدكتور موجوداً سيتم إنشاؤه تلقائياً.</small>
                 </div>
-                <div class="modal-body" style="padding: 28px;">
 
-                    <!-- Doctor Name -->
-                    <div class="form-group">
-                        <label for="inputDoctorName">
-                            <i class="fas fa-user-md ml-1"></i> اسم الدكتور
+                <!-- Course ID + Course Name -->
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="inputCourseId">
+                            <i class="fas fa-hashtag ml-1"></i> رقم المادة
                         </label>
-                        <input type="text" id="inputDoctorName" class="form-control"
-                               placeholder="أدخل اسم الدكتور" autocomplete="off">
-                        <small class="form-text text-muted">إذا لم يكن الدكتور موجوداً سيتم إنشاؤه تلقائياً.</small>
+                        <input type="number" id="inputCourseId" class="form-control"
+                               placeholder="مثال: 101" min="1" autocomplete="off">
+                        <small class="form-text text-muted">اختياري — للبحث عن مادة موجودة.</small>
                     </div>
-
-                    <!-- Course ID + Course Name -->
-                    <div class="form-row">
-                        <div class="form-group col-md-4">
-                            <label for="inputCourseId">
-                                <i class="fas fa-hashtag ml-1"></i> رقم المادة
-                            </label>
-                            <input type="number" id="inputCourseId" class="form-control"
-                                   placeholder="مثال: 101" min="1" autocomplete="off">
-                            <small class="form-text text-muted">اختياري — للبحث عن مادة موجودة.</small>
-                        </div>
-                        <div class="form-group col-md-8">
-                            <label for="inputCourseName">
-                                <i class="fas fa-book ml-1"></i> اسم المادة
-                            </label>
-                            <input type="text" id="inputCourseName" class="form-control"
-                                   placeholder="أدخل اسم المادة" autocomplete="off">
-                            <small class="form-text text-muted">إذا لم تكن المادة موجودة سيتم إنشاؤها تلقائياً.</small>
-                        </div>
+                    <div class="form-group col-md-8">
+                        <label for="inputCourseName">
+                            <i class="fas fa-book ml-1"></i> اسم المادة
+                        </label>
+                        <input type="text" id="inputCourseName" class="form-control"
+                               placeholder="أدخل اسم المادة" autocomplete="off">
+                        <small class="form-text text-muted">إذا لم تكن المادة موجودة سيتم إنشاؤها تلقائياً.</small>
                     </div>
+                </div>
 
-                    <!-- Specialization + Level -->
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="selectSpecialization">
-                                <i class="fas fa-tags ml-1"></i> التخصص
-                            </label>
-                            <select id="selectSpecialization" class="form-control custom-select">
-                                <option value="">-- اختر التخصص --</option>
-                                <option value="CS">CS — علوم الحاسب</option>
-                                <option value="CY">CY — أمن المعلومات</option>
-                                <option value="AI">AI — الذكاء الاصطناعي</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="selectLevel">
-                                <i class="fas fa-layer-group ml-1"></i> مستوى المادة
-                            </label>
-                            <select id="selectLevel" class="form-control custom-select">
-                                <option value="">-- اختر المستوى --</option>
-                                <option value="1">Level 1</option>
-                                <option value="2">Level 2</option>
-                                <option value="3">Level 3</option>
-                                <option value="4">Level 4</option>
-                            </select>
-                        </div>
+                <!-- Specialization + Students Count (same row) -->
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="selectSpecialization">
+                            <i class="fas fa-tags ml-1"></i> التخصص
+                        </label>
+                        <select id="selectSpecialization" class="form-control custom-select">
+                            <option value="">-- اختر التخصص --</option>
+                            <option value="CS">CS — علوم الحاسب</option>
+                            <option value="CY">CY — أمن المعلومات</option>
+                            <option value="AI">AI — الذكاء الاصطناعي</option>
+                            <option value="CM" style="background-color:#fef9c3; font-weight:700; border-right:4px solid #f59e0b;">⭐ CM — مادة مشتركة</option>
+                        </select>
                     </div>
-
-                    <!-- Students Count -->
-                    <div class="form-group mb-0">
+                    <div class="form-group col-md-6">
                         <label for="inputStudentsCount">
                             <i class="fas fa-users ml-1"></i> عدد الطلاب المسجلين
                         </label>
                         <input type="number" id="inputStudentsCount" class="form-control"
-                               placeholder="أدخل عدد الطلاب المسجلين" min="0" value="0">
+                               placeholder="أدخل عدد الطلاب" min="0" autocomplete="off">
                     </div>
+                </div>
 
+                <!-- Level -->
+                <div class="form-group mb-0">
+                    <label for="selectLevel">
+                        <i class="fas fa-layer-group ml-1"></i> مستوى المادة
+                    </label>
+                    <select id="selectLevel" class="form-control custom-select">
+                        <option value="">-- اختر المستوى --</option>
+                        <option value="1">Level 1</option>
+                        <option value="2">Level 2</option>
+                        <option value="3">Level 3</option>
+                        <option value="4">Level 4</option>
+                    </select>
                 </div>
-                <div class="modal-footer" style="border-top: 1px solid #e9ecef;">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
-                    <button type="button" id="saveBtn" class="btn btn-primary">
-                        <i class="fas fa-save ml-1"></i> حفظ
-                    </button>
-                </div>
+
+            </div>
+
+            <div class="modal-footer" style="border-top:1px solid #e9ecef;">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                <button type="button" id="saveBtn" class="btn btn-primary">
+                    <i class="fas fa-save ml-1"></i> حفظ
+                </button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 
-    <script>
-        var hasRows = @Model.Any().ToString().ToLower();
+<script>
+    var hasRows = @Model.Any().ToString().ToLower();
+    var modalMode = 'add';
+    var editingRow = null;
+    var editingDoctorId = null;
+    var editingCourseId = null;
 
-        function clearModal() {
-            $('#inputDoctorName').val('');
-            $('#inputCourseId').val('');
-            $('#inputCourseName').val('');
-            $('#selectSpecialization').val('');
-            $('#selectLevel').val('');
-            $('#inputStudentsCount').val('0');
+    function clearModal() {
+        $('#inputDoctorName').val('');
+        $('#inputCourseId').val('');
+        $('#inputCourseName').val('');
+        $('#selectSpecialization').val('');
+        $('#selectLevel').val('');
+        $('#inputStudentsCount').val('');
+    }
+
+    function setModalMode(mode) {
+        modalMode = mode;
+        if (mode === 'add') {
+            $('#modalTitleText').text('إضافة دكتور لمادة');
+            $('#modalIcon').attr('class', 'fas fa-user-plus ml-2');
+            $('#saveBtn').html('<i class="fas fa-save ml-1"></i> حفظ');
+        } else {
+            $('#modalTitleText').text('تعديل بيانات السجل');
+            $('#modalIcon').attr('class', 'fas fa-edit ml-2');
+            $('#saveBtn').html('<i class="fas fa-save ml-1"></i> تحديث');
         }
+    }
 
-        $('#saveBtn').on('click', function () {
-            var doctorName     = $('#inputDoctorName').val().trim();
-            var courseIdRaw    = $('#inputCourseId').val().trim();
-            var courseName     = $('#inputCourseName').val().trim();
-            var specialization = $('#selectSpecialization').val();
-            var levelRaw       = $('#selectLevel').val();
-            var studentsCount  = parseInt($('#inputStudentsCount').val()) || 0;
+    function renumberRows() {
+        $('#tableBody tr').each(function (idx) {
+            $(this).find('td.row-num').text(idx + 1);
+        });
+    }
 
-            if (!doctorName) {
-                Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى إدخال اسم الدكتور', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' });
-                return;
-            }
-            if (!courseName) {
-                Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى إدخال اسم المادة', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' });
-                return;
-            }
-            if (!specialization) {
-                Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى اختيار التخصص', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' });
-                return;
-            }
-            if (!levelRaw) {
-                Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى اختيار مستوى المادة', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' });
-                return;
-            }
+    function buildActionTd() {
+        return '<td>' +
+            '<button class="btn btn-warning btn-action btn-edit" title="تعديل"><i class="fas fa-edit"></i></button> ' +
+            '<button class="btn btn-danger btn-action btn-delete" title="حذف"><i class="fas fa-trash"></i></button>' +
+            '</td>';
+    }
 
-            var courseId = courseIdRaw ? parseInt(courseIdRaw) : null;
-            var level    = parseInt(levelRaw);
+    /* Open Add modal */
+    $('#btnOpenAdd').on('click', function () {
+        clearModal();
+        setModalMode('add');
+        editingRow = null;
+        editingDoctorId = null;
+        editingCourseId = null;
+        $('#addModal').modal('show');
+    });
 
-            $('#saveBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin ml-1"></i> جارٍ الحفظ...');
+    /* Edit button (event delegation for dynamically added rows) */
+    $(document).on('click', '.btn-edit', function () {
+        var tr = $(this).closest('tr');
+        editingRow      = tr;
+        editingDoctorId = tr.data('doctor-id');
+        editingCourseId = tr.data('course-id');
+
+        clearModal();
+        $('#inputDoctorName').val(tr.data('doctor-name'));
+        $('#inputCourseId').val(tr.data('course-id'));
+        $('#inputCourseName').val(tr.data('course-name'));
+        $('#selectSpecialization').val(String(tr.data('specialization')));
+        $('#selectLevel').val(String(tr.data('level')));
+        $('#inputStudentsCount').val(tr.data('students-count'));
+
+        setModalMode('edit');
+        $('#addModal').modal('show');
+    });
+
+    /* Delete button (event delegation) */
+    $(document).on('click', '.btn-delete', function () {
+        var tr         = $(this).closest('tr');
+        var doctorId   = tr.data('doctor-id');
+        var courseId   = tr.data('course-id');
+        var doctorName = tr.data('doctor-name');
+        var courseName = tr.data('course-name');
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'تأكيد الحذف',
+            html: 'هل أنت متأكد من حذف <strong>' + $('<span>').text(doctorName).html() +
+                  '</strong> من مادة <strong>' + $('<span>').text(courseName).html() + '</strong>؟',
+            showCancelButton: true,
+            confirmButtonText: 'نعم، احذف',
+            cancelButtonText: 'إلغاء',
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d'
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
 
             $.ajax({
-                url: '@Url.Action("AddDoctorCourse", "Doctor")',
+                url: '@Url.Action("DeleteDoctorCourse", "Doctor")',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({
-                    doctorName:     doctorName,
-                    courseId:       courseId,
-                    courseName:     courseName,
-                    specialization: specialization,
-                    level:          level,
-                    studentsCount:  studentsCount
-                }),
+                data: JSON.stringify({ doctorId: doctorId, courseId: courseId }),
                 success: function (res) {
                     if (res.success) {
-                        $('#addModal').modal('hide');
-                        clearModal();
-
-                        if (!hasRows) {
-                            $('#emptyState').hide();
-                            $('#tableWrapper').show();
-                            hasRows = true;
+                        tr.remove();
+                        renumberRows();
+                        var newCount = $('#tableBody tr').length;
+                        $('#rowCountBadge').text(newCount);
+                        if (newCount === 0) {
+                            hasRows = false;
+                            $('#tableWrapper').hide();
+                            $('#emptyState').show();
                         }
-
-                        var newIndex   = $('#tableBody tr').length + 1;
-                        var specClass  = 'badge-' + res.data.specialization;
-                        var safeDoctor = $('<span>').text(res.data.doctorName).html();
-                        var safeCourse = $('<span>').text(res.data.courseName).html();
-                        var safeSpec   = $('<span>').text(res.data.specialization).html();
-
-                        $('#tableBody').append(
-                            '<tr>' +
-                            '<td class="row-num">' + newIndex + '</td>' +
-                            '<td>' + safeDoctor + '</td>' +
-                            '<td>' + res.data.courseId + '</td>' +
-                            '<td>' + safeCourse + '</td>' +
-                            '<td><span class="badge badge-spec ' + specClass + '">' + safeSpec + '</span></td>' +
-                            '<td>Level ' + res.data.level + '</td>' +
-                            '<td>' + res.data.studentsCount + '</td>' +
-                            '</tr>'
-                        );
-
-                        $('#rowCountBadge').text(newIndex);
-
                         Swal.fire({
                             icon: 'success',
-                            title: 'تمت العملية',
+                            title: 'تم الحذف',
                             text: res.message,
-                            timer: 2200,
+                            timer: 2000,
                             showConfirmButton: false,
                             timerProgressBar: true
                         });
                     } else {
-                        Swal.fire({
-                            icon: res.isDuplicate ? 'warning' : 'error',
-                            title: res.isDuplicate ? 'تكرار' : 'خطأ',
-                            text: res.message,
-                            confirmButtonText: 'حسناً',
-                            confirmButtonColor: '#0d3b70'
-                        });
+                        Swal.fire({ icon: 'error', title: 'خطأ', text: res.message, confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' });
                     }
                 },
                 error: function () {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'خطأ في الاتصال',
-                        text: 'تعذّر الاتصال بالخادم. يرجى المحاولة مرة أخرى.',
-                        confirmButtonText: 'حسناً',
-                        confirmButtonColor: '#0d3b70'
-                    });
-                },
-                complete: function () {
-                    $('#saveBtn').prop('disabled', false).html('<i class="fas fa-save ml-1"></i> حفظ');
+                    Swal.fire({ icon: 'error', title: 'خطأ في الاتصال', text: 'تعذّر الاتصال بالخادم.', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' });
                 }
             });
         });
+    });
 
-        $('#inputDoctorName, #inputCourseName, #inputStudentsCount').on('keydown', function (e) {
-            if (e.key === 'Enter') $('#saveBtn').click();
-        });
+    /* Save / Update button */
+    $('#saveBtn').on('click', function () {
+        var doctorName       = $('#inputDoctorName').val().trim();
+        var courseIdRaw      = $('#inputCourseId').val().trim();
+        var courseName       = $('#inputCourseName').val().trim();
+        var specialization   = $('#selectSpecialization').val();
+        var levelRaw         = $('#selectLevel').val();
+        var studentsCountRaw = $('#inputStudentsCount').val().trim();
 
-        $('#addModal').on('hidden.bs.modal', function () {
-            clearModal();
+        if (!doctorName) {
+            Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى إدخال اسم الدكتور', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' }); return;
+        }
+        if (!courseName) {
+            Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى إدخال اسم المادة', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' }); return;
+        }
+        if (!specialization) {
+            Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى اختيار التخصص', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' }); return;
+        }
+        if (!levelRaw) {
+            Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى اختيار مستوى المادة', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' }); return;
+        }
+        if (studentsCountRaw === '') {
+            Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى إدخال عدد الطلاب المسجلين', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' }); return;
+        }
+
+        var courseId      = courseIdRaw ? parseInt(courseIdRaw) : null;
+        var level         = parseInt(levelRaw);
+        var studentsCount = parseInt(studentsCountRaw);
+
+        $('#saveBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin ml-1"></i> جارٍ الحفظ...');
+
+        if (modalMode === 'add') {
+            doAdd(doctorName, courseId, courseName, specialization, level, studentsCount);
+        } else {
+            doEdit(editingDoctorId, editingCourseId, doctorName, courseName, specialization, level, studentsCount);
+        }
+    });
+
+    function doAdd(doctorName, courseId, courseName, specialization, level, studentsCount) {
+        $.ajax({
+            url: '@Url.Action("AddDoctorCourse", "Doctor")',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ doctorName, courseId, courseName, specialization, level, studentsCount }),
+            success: function (res) {
+                if (res.success) {
+                    $('#addModal').modal('hide');
+                    clearModal();
+
+                    if (!hasRows) {
+                        $('#emptyState').hide();
+                        $('#tableWrapper').show();
+                        hasRows = true;
+                    }
+
+                    var newIndex  = $('#tableBody tr').length + 1;
+                    var specClass = 'badge-' + res.data.specialization;
+                    var safeDoctor = $('<span>').text(res.data.doctorName).html();
+                    var safeCourse = $('<span>').text(res.data.courseName).html();
+                    var safeSpec   = $('<span>').text(res.data.specialization).html();
+                    var safeDN = res.data.doctorName.replace(/"/g, '&quot;');
+                    var safeCN = res.data.courseName.replace(/"/g, '&quot;');
+
+                    $('#tableBody').append(
+                        '<tr data-doctor-id="' + res.data.doctorId + '" data-course-id="' + res.data.courseId + '"' +
+                        ' data-doctor-name="' + safeDN + '" data-course-name="' + safeCN + '"' +
+                        ' data-specialization="' + res.data.specialization + '" data-level="' + res.data.level + '"' +
+                        ' data-students-count="' + res.data.studentsCount + '">' +
+                        '<td class="row-num">' + newIndex + '</td>' +
+                        '<td>' + safeDoctor + '</td>' +
+                        '<td>' + res.data.courseId + '</td>' +
+                        '<td>' + safeCourse + '</td>' +
+                        '<td><span class="badge badge-spec ' + specClass + '">' + safeSpec + '</span></td>' +
+                        '<td>Level ' + res.data.level + '</td>' +
+                        '<td>' + res.data.studentsCount + '</td>' +
+                        buildActionTd() +
+                        '</tr>'
+                    );
+
+                    $('#rowCountBadge').text(newIndex);
+
+                    Swal.fire({ icon: 'success', title: 'تمت العملية', text: res.message, timer: 2200, showConfirmButton: false, timerProgressBar: true });
+                } else {
+                    Swal.fire({
+                        icon: res.isDuplicate ? 'warning' : 'error',
+                        title: res.isDuplicate ? 'تكرار' : 'خطأ',
+                        text: res.message,
+                        confirmButtonText: 'حسناً',
+                        confirmButtonColor: '#0d3b70'
+                    });
+                }
+            },
+            error: function () {
+                Swal.fire({ icon: 'error', title: 'خطأ في الاتصال', text: 'تعذّر الاتصال بالخادم. يرجى المحاولة مرة أخرى.', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' });
+            },
+            complete: function () {
+                $('#saveBtn').prop('disabled', false).html('<i class="fas fa-save ml-1"></i> حفظ');
+            }
         });
-    </script>
+    }
+
+    function doEdit(origDoctorId, origCourseId, doctorName, courseName, specialization, level, studentsCount) {
+        $.ajax({
+            url: '@Url.Action("UpdateDoctorCourse", "Doctor")',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ originalDoctorId: origDoctorId, originalCourseId: origCourseId, doctorName, courseName, specialization, level, studentsCount }),
+            success: function (res) {
+                if (res.success) {
+                    $('#addModal').modal('hide');
+                    clearModal();
+
+                    var tr = editingRow;
+                    tr.attr('data-doctor-name',   res.data.doctorName);
+                    tr.attr('data-course-name',    res.data.courseName);
+                    tr.attr('data-specialization', res.data.specialization);
+                    tr.attr('data-level',          res.data.level);
+                    tr.attr('data-students-count', res.data.studentsCount);
+
+                    var tds = tr.find('td');
+                    tds.eq(1).text(res.data.doctorName);
+                    tds.eq(3).text(res.data.courseName);
+                    tds.eq(4).html('<span class="badge badge-spec badge-' + res.data.specialization + '">' + $('<span>').text(res.data.specialization).html() + '</span>');
+                    tds.eq(5).text('Level ' + res.data.level);
+                    tds.eq(6).text(res.data.studentsCount);
+
+                    editingRow = null; editingDoctorId = null; editingCourseId = null;
+
+                    Swal.fire({ icon: 'success', title: 'تم التحديث', text: res.message, timer: 2200, showConfirmButton: false, timerProgressBar: true });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'خطأ', text: res.message, confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' });
+                }
+            },
+            error: function () {
+                Swal.fire({ icon: 'error', title: 'خطأ في الاتصال', text: 'تعذّر الاتصال بالخادم.', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' });
+            },
+            complete: function () {
+                var label = modalMode === 'edit' ? 'تحديث' : 'حفظ';
+                $('#saveBtn').prop('disabled', false).html('<i class="fas fa-save ml-1"></i> ' + label);
+            }
+        });
+    }
+
+    $('#inputDoctorName, #inputCourseName, #inputStudentsCount').on('keydown', function (e) {
+        if (e.key === 'Enter') $('#saveBtn').click();
+    });
+
+    $('#addModal').on('hidden.bs.modal', function () {
+        clearModal();
+        setModalMode('add');
+        editingRow = null; editingDoctorId = null; editingCourseId = null;
+    });
+</script>
 </body>
 </html>
