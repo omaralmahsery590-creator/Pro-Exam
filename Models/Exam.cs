@@ -18,5 +18,6 @@ namespace pro_exam.Models
         public TimeSpan EndTime { get; set; }
 
         public ICollection<Montering> Monitorings { get; set; }
+        public ICollection<ExamExtraRoom> ExtraRooms { get; set; }
     }
 }

@@ -89,15 +89,43 @@
             margin-bottom: 16px;
         }
 
-        .room-hint {
+        .extra-proctors-section {
             background: #eaf4fb;
             border-right: 4px solid #1a6fa8;
-            border-radius: 6px;
-            padding: 10px 14px;
-            font-size: 0.88rem;
-            color: #0d3b70;
-            margin-top: 8px;
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-top: 16px;
         }
+
+        .extra-proctors-section .section-title {
+            margin-bottom: 12px;
+        }
+
+        .btn-add-proctor {
+            background: #1a6fa8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-add-proctor:hover { background: #0d5a8e; }
+
+        .btn-remove-proctor {
+            background: #c0392b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .btn-remove-proctor:hover { background: #a93226; }
     </style>
 </head>
 <body>
@@ -145,9 +173,8 @@
                     @foreach (var course in (IEnumerable<Course>)ViewBag.Courses)
                     {
                         <option value="@course.Id"
-                                data-level="@course.Level"
                                 data-students="@course.NumberOfStudents">
-                            Level @course.Level — @course.CourseName (@course.Specialization)
+                            @course.CourseName (@course.Specialization) -- Level @course.Level
                         </option>
                     }
                 </select>
@@ -155,24 +182,42 @@
         </div>
 
         <div class="form-row">
-            <div class="form-group col-md-4">
-                <label>
-                    <i class="fas fa-layer-group ml-1"></i> المستوى
-                </label>
-                <input type="text" id="displayLevel" class="form-control" readonly
-                       placeholder="يُحدَّد تلقائياً" style="background:#f8f9fa;">
-            </div>
-            <div class="form-group col-md-8">
+            <div class="form-group col-md-6">
                 <label for="inputStudents">
                     <i class="fas fa-users ml-1"></i> عدد الطلاب المتوقع
                 </label>
                 <input type="number" id="inputStudents" class="form-control"
                        placeholder="أدخل العدد المتوقع" min="1" max="500">
-                <div class="room-hint" id="roomHint" style="display:none;">
-                    <i class="fas fa-door-open ml-1"></i>
-                    العدد يتجاوز 70 — سيُعرض خيار إضافة <strong>غرفة 2</strong> عند الحفظ.
-                </div>
             </div>
+            <div class="form-group col-md-6">
+                <label for="selectRoom">
+                    <i class="fas fa-door-open ml-1"></i> القاعة
+                </label>
+                <select id="selectRoom" class="form-control custom-select" required>
+                    <option value="">-- اختر القاعة --</option>
+                    @foreach (var room in (IEnumerable<Room>)ViewBag.Rooms)
+                    {
+                        <option value="@room.Id">@room.Name --Capacity (@room.Capacity)</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <!-- Extra Proctors + Rooms Section (shown when students > 70) -->
+        <div id="extraProctorsSection" class="extra-proctors-section" style="display:none;">
+            <p class="section-title">
+                <i class="fas fa-users ml-1"></i>
+                مراقبون وقاعات إضافية — العدد يتجاوز 70 طالباً
+            </p>
+            <div class="form-row mb-1 d-none" id="extraHeaderRow">
+                <div class="col"><small class="text-muted font-weight-bold">المراقب الإضافي</small></div>
+                <div class="col"><small class="text-muted font-weight-bold">القاعة الإضافية المخصصة</small></div>
+                <div class="col-auto" style="width:42px;"></div>
+            </div>
+            <div id="extraProctorsList"></div>
+            <button type="button" class="btn-add-proctor mt-2" id="btnAddProctor">
+                <i class="fas fa-plus ml-1"></i> إضافة مراقب + قاعة إضافية
+            </button>
         </div>
 
         <hr class="section-divider">
@@ -215,13 +260,21 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // Auto-fill level when course is selected
-    $('#selectCourse').on('change', function () {
-        var selected = $(this).find('option:selected');
-        var level = selected.data('level');
-        $('#displayLevel').val(level ? 'Level ' + level : '');
-        checkStudentCount();
-    });
+    var allDoctors = [
+        @foreach (var doctor in (IEnumerable<Doctor>)ViewBag.Doctors)
+        {
+            <text>{ id: @doctor.Id, name: "@doctor.DoctorName" },</text>
+        }
+    ];
+
+    var allRooms = [
+        @foreach (var room in (IEnumerable<Room>)ViewBag.Rooms)
+        {
+            <text>{ id: @room.Id, name: "@room.Name" },</text>
+        }
+    ];
+
+    var extraProctorCount = 0;
 
     $('#inputStudents').on('input', function () {
         checkStudentCount();
@@ -230,20 +283,93 @@
     function checkStudentCount() {
         var val = parseInt($('#inputStudents').val());
         if (val > 70) {
-            $('#roomHint').show();
+            $('#extraProctorsSection').show();
+            $('#extraHeaderRow').removeClass('d-none');
         } else {
-            $('#roomHint').hide();
+            $('#extraProctorsSection').hide();
+            $('#extraHeaderRow').addClass('d-none');
+            $('#extraProctorsList').empty();
+            extraProctorCount = 0;
         }
     }
 
-    function getFormData(addRoom2) {
+    function buildDoctorOptions(excludeId) {
+        var opts = '<option value="">-- اختر مراقباً إضافياً --</option>';
+        allDoctors.forEach(function (d) {
+            if (d.id !== excludeId) {
+                opts += '<option value="' + d.id + '">' + d.name + '</option>';
+            }
+        });
+        return opts;
+    }
+
+    function buildRoomOptions(excludeId) {
+        var opts = '<option value="">-- اختر قاعة إضافية --</option>';
+        allRooms.forEach(function (r) {
+            if (r.id !== excludeId) {
+                opts += '<option value="' + r.id + '">' + r.name + '</option>';
+            }
+        });
+        return opts;
+    }
+
+    $('#btnAddProctor').on('click', function () {
+        extraProctorCount++;
+        var mainDoctorId = parseInt($('#selectDoctor').val()) || 0;
+        var mainRoomId   = parseInt($('#selectRoom').val()) || 0;
+        var rowHtml =
+            '<div class="form-row align-items-center mb-2" id="extraProctorRow' + extraProctorCount + '">' +
+            '<div class="col">' +
+            '<select class="form-control custom-select extra-proctor-select">' +
+            buildDoctorOptions(mainDoctorId) +
+            '</select>' +
+            '</div>' +
+            '<div class="col">' +
+            '<select class="form-control custom-select extra-room-select">' +
+            buildRoomOptions(mainRoomId) +
+            '</select>' +
+            '</div>' +
+            '<div class="col-auto">' +
+            '<button type="button" class="btn-remove-proctor" onclick="removeExtraProctor(' + extraProctorCount + ')">' +
+            '<i class="fas fa-times"></i>' +
+            '</button>' +
+            '</div>' +
+            '</div>';
+        $('#extraProctorsList').append(rowHtml);
+    });
+
+    function removeExtraProctor(id) {
+        $('#extraProctorRow' + id).remove();
+    }
+
+    function getExtraDoctorIds() {
+        var ids = [];
+        $('.extra-proctor-select').each(function () {
+            var val = parseInt($(this).val());
+            if (val > 0) ids.push(val);
+        });
+        return ids;
+    }
+
+    function getExtraRoomIds() {
+        var ids = [];
+        $('.extra-room-select').each(function () {
+            var val = parseInt($(this).val());
+            if (val > 0) ids.push(val);
+        });
+        return ids;
+    }
+
+    function getFormData() {
         return {
-            doctorId: parseInt($('#selectDoctor').val()),
-            courseId: parseInt($('#selectCourse').val()),
+            doctorId: parseInt($('#selectDoctor').val()) || 0,
+            courseId: parseInt($('#selectCourse').val()) || 0,
+            roomId: parseInt($('#selectRoom').val()) || 0,
             examDate: $('#inputDate').val(),
             examTime: $('#inputTime').val(),
             expectedStudents: parseInt($('#inputStudents').val()) || 0,
-            addRoom2: addRoom2
+            extraDoctorIds: getExtraDoctorIds(),
+            extraRoomIds: getExtraRoomIds()
         };
     }
 
@@ -254,6 +380,10 @@
         }
         if (!$('#selectCourse').val()) {
             Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى اختيار المادة', confirmButtonText: 'حسناً' });
+            return false;
+        }
+        if (!$('#selectRoom').val()) {
+            Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى اختيار القاعة', confirmButtonText: 'حسناً' });
             return false;
         }
         if (!$('#inputDate').val()) {
@@ -267,8 +397,8 @@
         return true;
     }
 
-    function submitExam(addRoom2) {
-        var data = getFormData(addRoom2);
+    function submitExam() {
+        var data = getFormData();
 
         $.ajax({
             url: '@Url.Action("AddExamAjax", "Exam")',
@@ -285,20 +415,6 @@
                         confirmButtonColor: '#0d3b70'
                     }).then(function () {
                         window.location.href = '@Url.Action("ExamDashBoard", "Exam")';
-                    });
-
-                } else if (res.status === 'needRoom2') {
-                    Swal.fire({
-                        icon: 'question',
-                        title: 'إضافة غرفة إضافية',
-                        text: res.message,
-                        showCancelButton: true,
-                        confirmButtonText: 'نعم، أضف غرفة 2',
-                        cancelButtonText: 'لا، غرفة 1 فقط',
-                        confirmButtonColor: '#1a6fa8',
-                        cancelButtonColor: '#6c757d'
-                    }).then(function (result) {
-                        submitExam(result.isConfirmed);
                     });
 
                 } else if (res.status === 'conflict') {
@@ -332,7 +448,7 @@
 
     $('#btnSave').on('click', function () {
         if (!validateForm()) return;
-        submitExam(false);
+        submitExam();
     });
 </script>
 </body>
