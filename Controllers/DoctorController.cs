@@ -109,6 +109,7 @@ namespace pro_exam.Controllers
                 message = "تمت إضافة المادة بنجاح",
                 data = new
                 {
+                    doctorId = doctor.Id,
                     doctorName = doctor.DoctorName,
                     courseId = course.Id,
                     courseName = course.CourseName,
@@ -117,6 +118,84 @@ namespace pro_exam.Controllers
                     studentsCount = course.NumberOfStudents
                 }
             });
+        }
+
+        [HttpPost]
+        public IActionResult UpdateDoctorCourse([FromBody] UpdateDoctorCourseRequest request)
+        {
+            if (request == null)
+                return Json(new { success = false, message = "بيانات غير صحيحة" });
+            if (string.IsNullOrWhiteSpace(request.DoctorName))
+                return Json(new { success = false, message = "يرجى إدخال اسم الدكتور" });
+            if (string.IsNullOrWhiteSpace(request.CourseName))
+                return Json(new { success = false, message = "يرجى إدخال اسم المادة" });
+            if (string.IsNullOrWhiteSpace(request.Specialization))
+                return Json(new { success = false, message = "يرجى اختيار التخصص" });
+            if (request.Level < 1 || request.Level > 4)
+                return Json(new { success = false, message = "يرجى اختيار مستوى صحيح" });
+
+            var doctor = _context.Doctors.Find(request.OriginalDoctorId);
+            if (doctor == null)
+                return Json(new { success = false, message = "الدكتور غير موجود" });
+
+            var course = _context.Courses.Find(request.OriginalCourseId);
+            if (course == null)
+                return Json(new { success = false, message = "المادة غير موجودة" });
+
+            var newDoctorName = request.DoctorName.Trim();
+            if (doctor.DoctorName != newDoctorName)
+            {
+                bool nameConflict = _context.Doctors.Any(d => d.DoctorName == newDoctorName && d.Id != doctor.Id);
+                if (nameConflict)
+                    return Json(new { success = false, message = "يوجد دكتور آخر بهذا الاسم بالفعل" });
+                doctor.DoctorName = newDoctorName;
+            }
+
+            course.CourseName = request.CourseName.Trim();
+            course.Specialization = request.Specialization.Trim();
+            course.Level = request.Level;
+            course.NumberOfStudents = request.StudentsCount;
+
+            try
+            {
+                _context.SaveChanges();
+                return Json(new
+                {
+                    success = true,
+                    message = "تم تحديث السجل بنجاح",
+                    data = new
+                    {
+                        doctorId = doctor.Id,
+                        doctorName = doctor.DoctorName,
+                        courseId = course.Id,
+                        courseName = course.CourseName,
+                        specialization = course.Specialization,
+                        level = course.Level,
+                        studentsCount = course.NumberOfStudents
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "حدث خطأ أثناء الحفظ: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public IActionResult DeleteDoctorCourse([FromBody] DeleteDoctorCourseRequest request)
+        {
+            if (request == null)
+                return Json(new { success = false, message = "بيانات غير صحيحة" });
+
+            var dc = _context.DoctorCourses
+                .FirstOrDefault(x => x.DoctorId == request.DoctorId && x.CourseId == request.CourseId);
+            if (dc == null)
+                return Json(new { success = false, message = "السجل غير موجود" });
+
+            _context.DoctorCourses.Remove(dc);
+            _context.SaveChanges();
+
+            return Json(new { success = true, message = "تم حذف السجل بنجاح" });
         }
     }
 }

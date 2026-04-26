@@ -35,4 +35,21 @@ namespace pro_exam.ViewModel
         public string Specialization { get; set; }
         public int Level { get; set; }
     }
+
+    public class UpdateDoctorCourseRequest
+    {
+        public int OriginalDoctorId { get; set; }
+        public int OriginalCourseId { get; set; }
+        public string DoctorName { get; set; }
+        public string CourseName { get; set; }
+        public string Specialization { get; set; }
+        public int Level { get; set; }
+        public int StudentsCount { get; set; }
+    }
+
+    public class DeleteDoctorCourseRequest
+    {
+        public int DoctorId { get; set; }
+        public int CourseId { get; set; }
+    }
 }
