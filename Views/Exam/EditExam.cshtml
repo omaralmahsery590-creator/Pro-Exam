@@ -158,9 +158,9 @@
 
         <div class="form-row">
             <div class="form-group col-md-6">
-                <label><i class="fas fa-users ml-1"></i> عدد الطلاب المتوقع</label>
+                <label><i class="fas fa-users ml-1"></i> عدد الطلاب المتوقع <span class="text-danger">*</span></label>
                 <input type="number" id="inputStudents" class="form-control"
-                       placeholder="أدخل العدد المتوقع" min="1" max="500">
+                       placeholder="أدخل العدد المتوقع" min="1" max="500" required>
             </div>
             <div class="form-group col-md-6">
                 <label><i class="fas fa-door-open ml-1"></i> القاعة</label>
@@ -328,8 +328,27 @@
         if (!$('#selectCourse').val()) {
             Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى اختيار المادة', confirmButtonText: 'حسناً' }); return false;
         }
+        var students = parseInt($('#inputStudents').val());
+        if (!$('#inputStudents').val() || isNaN(students) || students < 1) {
+            Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى إدخال عدد الطلاب المتوقع', confirmButtonText: 'حسناً' }); return false;
+        }
         if (!$('#selectRoom').val()) {
             Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى اختيار القاعة', confirmButtonText: 'حسناً' }); return false;
+        }
+        if (students > 70) {
+            var rows = $('#extraProctorsList .form-row');
+            if (rows.length === 0) {
+                Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'عدد الطلاب يتجاوز 70، يرجى إضافة مراقب وقاعة إضافية على الأقل', confirmButtonText: 'حسناً' }); return false;
+            }
+            var valid = true;
+            rows.each(function () {
+                var doc = $(this).find('.extra-proctor-select').val();
+                var room = $(this).find('.extra-room-select').val();
+                if (!doc || doc === '' || !room || room === '') { valid = false; return false; }
+            });
+            if (!valid) {
+                Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى اختيار المراقب الإضافي والقاعة الإضافية لكل صف', confirmButtonText: 'حسناً' }); return false;
+            }
         }
         if (!$('#inputDate').val()) {
             Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى تحديد تاريخ الامتحان', confirmButtonText: 'حسناً' }); return false;

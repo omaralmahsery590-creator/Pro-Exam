@@ -74,6 +74,12 @@ namespace pro_exam.Controllers
             if (sameLevelCount >= 2)
                 return Json(new { status = "conflict", message = $"تعارض المستوى: وصل الحد الأقصى (2 امتحانات) لمستوى {course.Level} في يوم {examDate:yyyy-MM-dd}" });
 
+            // Rule 3: Level time conflict - no two exams of the same level at the same time on the same date
+            bool levelTimeConflict = _context.Exams.Include(e => e.Course)
+                .Any(e => e.ExamDate.Date == examDate && e.StartTime == examTime && e.Course.Level == course.Level);
+            if (levelTimeConflict)
+                return Json(new { status = "conflict", message = $"تعارض المستوى والوقت: يوجد امتحان آخر لمستوى {course.Level} في نفس الساعة ونفس التاريخ" });
+
             // Collect all rooms to check (primary + extra), deduped
             var extraRoomIds = request.ExtraRoomIds?.Where(id => id > 0 && id != request.RoomId).Distinct().ToList() ?? new List<int>();
             var allRoomIds = new List<int> { request.RoomId };
@@ -200,6 +206,12 @@ namespace pro_exam.Controllers
                 .Count(e => e.ExamDate.Date == examDate && e.Course.Level == course.Level && e.Id != request.ExamId);
             if (sameLevelCount >= 2)
                 return Json(new { status = "conflict", message = $"تعارض المستوى: وصل الحد الأقصى (2 امتحانات) لمستوى {course.Level} في يوم {examDate:yyyy-MM-dd}" });
+
+            // Rule 3: Level time conflict - no two exams of the same level at the same time on the same date (exclude current exam)
+            bool levelTimeConflict = _context.Exams.Include(e => e.Course)
+                .Any(e => e.ExamDate.Date == examDate && e.StartTime == examTime && e.Course.Level == course.Level && e.Id != request.ExamId);
+            if (levelTimeConflict)
+                return Json(new { status = "conflict", message = $"تعارض المستوى والوقت: يوجد امتحان آخر لمستوى {course.Level} في نفس الساعة ونفس التاريخ" });
 
             var extraRoomIds = request.ExtraRoomIds?.Where(id => id > 0 && id != request.RoomId).Distinct().ToList() ?? new List<int>();
             var allRoomIds = new List<int> { request.RoomId };
