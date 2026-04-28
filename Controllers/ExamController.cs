@@ -22,9 +22,6 @@ namespace pro_exam.Controllers
         public IActionResult ExamDashBoard()
         {
             var exams = _context.Exams
-                .Include(e => e.Course)
-                .Include(e => e.Room)
-                .Include(e => e.Monitorings).ThenInclude(m => m.Doctor)
                 .Select(exam => new ExamWithAvailableDoctorsViewModel
                 {
                     ExamId = exam.Id,
@@ -33,6 +30,7 @@ namespace pro_exam.Controllers
                     StartTime = exam.StartTime,
                     EndTime = exam.EndTime,
                     RoomName = exam.Room.Name,
+                    ExtraRoomNames = exam.ExtraRooms.Select(r => r.Room.Name).ToList(),
                     AssignedDoctors = exam.Monitorings.Select(m => m.Doctor.DoctorName).ToList()
                 }).ToList();
 
@@ -42,47 +40,298 @@ namespace pro_exam.Controllers
         public IActionResult AddExam()
         {
             ViewBag.Courses = _context.Courses.ToList();
+            ViewBag.Doctors = _context.Doctors.ToList();
             ViewBag.Rooms = _context.Rooms.ToList();
             return View();
         }
 
         [HttpPost]
-        public IActionResult AddExam(Exam exam)
+        public IActionResult AddExamAjax([FromBody] pro_exam.ViewModel.AddExamRequest request)
         {
-            if (ModelState.IsValid)
+            if (request == null)
+                return Json(new { status = "error", message = "بيانات غير صالحة" });
+
+            var course = _context.Courses.Find(request.CourseId);
+            if (course == null)
+                return Json(new { status = "error", message = "المادة غير موجودة" });
+
+            var room = _context.Rooms.Find(request.RoomId);
+            if (room == null)
+                return Json(new { status = "error", message = "القاعة غير موجودة" });
+
+            if (!TimeSpan.TryParse(request.ExamTime, out TimeSpan examTime))
+                return Json(new { status = "error", message = "وقت الامتحان غير صحيح" });
+
+            var examDate = request.ExamDate.Date;
+
+            // Rule 1: Duplicate exam - same course cannot be scheduled more than once
+            if (_context.Exams.Any(e => e.CourseId == request.CourseId))
+                return Json(new { status = "conflict", message = "تكرار: تم جدولة امتحان لهذه المادة مسبقاً" });
+
+            // Rule 2: Level conflict - max 2 exams per academic level per day
+            int sameLevelCount = _context.Exams.Include(e => e.Course)
+                .Count(e => e.ExamDate.Date == examDate && e.Course.Level == course.Level);
+            if (sameLevelCount >= 2)
+                return Json(new { status = "conflict", message = $"تعارض المستوى: وصل الحد الأقصى (2 امتحانات) لمستوى {course.Level} في يوم {examDate:yyyy-MM-dd}" });
+
+            // Rule 3: Level time conflict - no two exams of the same level at the same time on the same date
+            bool levelTimeConflict = _context.Exams.Include(e => e.Course)
+                .Any(e => e.ExamDate.Date == examDate && e.StartTime == examTime && e.Course.Level == course.Level);
+            if (levelTimeConflict)
+                return Json(new { status = "conflict", message = $"تعارض المستوى والوقت: يوجد امتحان آخر لمستوى {course.Level} في نفس الساعة ونفس التاريخ" });
+
+            // Collect all rooms to check (primary + extra), deduped
+            var extraRoomIds = request.ExtraRoomIds?.Where(id => id > 0 && id != request.RoomId).Distinct().ToList() ?? new List<int>();
+            var allRoomIds = new List<int> { request.RoomId };
+            allRoomIds.AddRange(extraRoomIds);
+
+            // Rule 1: No two exams sharing a room (primary or extra) at the same date and time
+            foreach (var roomId in allRoomIds)
             {
-                _context.Exams.Add(exam);
-                _context.SaveChanges();
-                TempData["SuccessMessage"] = "Exam added successfully!";
-                return RedirectToAction("ExamDashBoard");
+                var primaryRoomConflict = _context.Exams
+                    .Any(e => e.RoomId == roomId && e.ExamDate.Date == examDate && e.StartTime == examTime);
+                if (primaryRoomConflict)
+                {
+                    var conflictRoom = _context.Rooms.Find(roomId);
+                    return Json(new { status = "conflict", message = "تعارض قاعة: القاعة \"" + (conflictRoom?.Name ?? "") + "\" محجوزة في نفس الوقت والتاريخ" });
+                }
+
+                var extraRoomConflict = _context.ExamExtraRooms
+                    .Include(r => r.Exam)
+                    .Any(r => r.RoomId == roomId && r.Exam.ExamDate.Date == examDate && r.Exam.StartTime == examTime);
+                if (extraRoomConflict)
+                {
+                    var conflictRoom = _context.Rooms.Find(roomId);
+                    return Json(new { status = "conflict", message = "تعارض قاعة: القاعة \"" + (conflictRoom?.Name ?? "") + "\" محجوزة كقاعة إضافية في نفس الوقت والتاريخ" });
+                }
             }
-            ViewBag.Courses = _context.Courses.ToList();
-            ViewBag.Rooms = _context.Rooms.ToList();
-            return View("Exam");
+
+            // Rule 2: No doctor (primary or extra) can proctor two exams at the same date and time
+            var allDoctorIds = new List<int> { request.DoctorId };
+            if (request.ExtraDoctorIds != null)
+                allDoctorIds.AddRange(request.ExtraDoctorIds.Where(id => id > 0 && id != request.DoctorId));
+
+            foreach (var doctorId in allDoctorIds)
+            {
+                var doctorConflict = _context.Monterings
+                    .Include(m => m.Exam)
+                    .Any(m => m.DoctorId == doctorId && m.Exam.ExamDate.Date == examDate && m.Exam.StartTime == examTime);
+                if (doctorConflict)
+                {
+                    var conflictDoctor = _context.Doctors.Find(doctorId);
+                    return Json(new { status = "conflict", message = "تعارض مراقب: الدكتور \"" + (conflictDoctor?.DoctorName ?? "") + "\" لديه امتحان آخر في نفس الوقت وهذا التاريخ" });
+                }
+            }
+
+            var exam = new Exam
+            {
+                CourseId = request.CourseId,
+                RoomId = request.RoomId,
+                ExamDate = request.ExamDate,
+                StartTime = examTime,
+                EndTime = examTime.Add(TimeSpan.FromHours(2))
+            };
+
+            _context.Exams.Add(exam);
+            _context.SaveChanges();
+
+            foreach (var doctorId in allDoctorIds)
+                _context.Monterings.Add(new Montering { DoctorId = doctorId, ExamId = exam.Id });
+
+            foreach (var extraRoomId in extraRoomIds)
+                _context.ExamExtraRooms.Add(new ExamExtraRoom { RoomId = extraRoomId, ExamId = exam.Id });
+
+            _context.SaveChanges();
+
+            var roomNames = room.Name;
+            if (extraRoomIds.Count > 0)
+            {
+                var extraRoomNames = _context.Rooms.Where(r => extraRoomIds.Contains(r.Id)).Select(r => r.Name).ToList();
+                roomNames += " + " + string.Join(" + ", extraRoomNames);
+            }
+
+            return Json(new { status = "success", message = "تم جدولة الامتحان بنجاح في: " + roomNames });
         }
 
         public IActionResult EditExam(int id)
         {
-            var exam = _context.Exams.Find(id);
+            var exam = _context.Exams
+                .Include(e => e.Monitorings)
+                .Include(e => e.ExtraRooms)
+                .Include(e => e.Course)
+                .FirstOrDefault(e => e.Id == id);
             if (exam == null) return NotFound();
             ViewBag.Courses = _context.Courses.ToList();
+            ViewBag.Doctors = _context.Doctors.ToList();
             ViewBag.Rooms = _context.Rooms.ToList();
+            var sortedMonitorings = exam.Monitorings.OrderBy(m => m.Id).ToList();
+            ViewBag.PrimaryDoctorId = sortedMonitorings.FirstOrDefault()?.DoctorId ?? 0;
+            ViewBag.ExtraDoctorIds = sortedMonitorings.Skip(1).Select(m => m.DoctorId).ToList();
+            ViewBag.ExtraRoomIds = exam.ExtraRooms.Select(r => r.RoomId).ToList();
             return View(exam);
         }
 
         [HttpPost]
-        public IActionResult SaveEditExam(Exam exam)
+        public IActionResult EditExamAjax([FromBody] EditExamRequest request)
         {
-            if (ModelState.IsValid)
+            if (request == null)
+                return Json(new { status = "error", message = "بيانات غير صالحة" });
+
+            var exam = _context.Exams
+                .Include(e => e.Monitorings)
+                .Include(e => e.ExtraRooms)
+                .FirstOrDefault(e => e.Id == request.ExamId);
+            if (exam == null)
+                return Json(new { status = "error", message = "الامتحان غير موجود" });
+
+            var course = _context.Courses.Find(request.CourseId);
+            if (course == null)
+                return Json(new { status = "error", message = "المادة غير موجودة" });
+
+            var room = _context.Rooms.Find(request.RoomId);
+            if (room == null)
+                return Json(new { status = "error", message = "القاعة غير موجودة" });
+
+            if (!TimeSpan.TryParse(request.ExamTime, out TimeSpan examTime))
+                return Json(new { status = "error", message = "وقت الامتحان غير صحيح" });
+
+            var examDate = request.ExamDate.Date;
+
+            // Rule 1: Duplicate exam (exclude current exam)
+            if (_context.Exams.Any(e => e.CourseId == request.CourseId && e.Id != request.ExamId))
+                return Json(new { status = "conflict", message = "تكرار: تم جدولة امتحان لهذه المادة مسبقاً" });
+
+            // Rule 2: Level conflict - max 2 exams per academic level per day (exclude current exam)
+            int sameLevelCount = _context.Exams.Include(e => e.Course)
+                .Count(e => e.ExamDate.Date == examDate && e.Course.Level == course.Level && e.Id != request.ExamId);
+            if (sameLevelCount >= 2)
+                return Json(new { status = "conflict", message = $"تعارض المستوى: وصل الحد الأقصى (2 امتحانات) لمستوى {course.Level} في يوم {examDate:yyyy-MM-dd}" });
+
+            // Rule 3: Level time conflict - no two exams of the same level at the same time on the same date (exclude current exam)
+            bool levelTimeConflict = _context.Exams.Include(e => e.Course)
+                .Any(e => e.ExamDate.Date == examDate && e.StartTime == examTime && e.Course.Level == course.Level && e.Id != request.ExamId);
+            if (levelTimeConflict)
+                return Json(new { status = "conflict", message = $"تعارض المستوى والوقت: يوجد امتحان آخر لمستوى {course.Level} في نفس الساعة ونفس التاريخ" });
+
+            var extraRoomIds = request.ExtraRoomIds?.Where(id => id > 0 && id != request.RoomId).Distinct().ToList() ?? new List<int>();
+            var allRoomIds = new List<int> { request.RoomId };
+            allRoomIds.AddRange(extraRoomIds);
+
+            // Rule 3: Room conflict (exclude current exam)
+            foreach (var roomId in allRoomIds)
             {
-                _context.Exams.Update(exam);
-                _context.SaveChanges();
-                TempData["SuccessMessage"] = "Exam updated successfully!";
-                return RedirectToAction("ExamDashBoard");
+                var primaryRoomConflict = _context.Exams
+                    .Any(e => e.RoomId == roomId && e.ExamDate.Date == examDate && e.StartTime == examTime && e.Id != request.ExamId);
+                if (primaryRoomConflict)
+                {
+                    var conflictRoom = _context.Rooms.Find(roomId);
+                    return Json(new { status = "conflict", message = "تعارض قاعة: القاعة \"" + (conflictRoom?.Name ?? "") + "\" محجوزة في نفس الوقت والتاريخ" });
+                }
+
+                var extraRoomConflict = _context.ExamExtraRooms
+                    .Include(r => r.Exam)
+                    .Any(r => r.RoomId == roomId && r.Exam.ExamDate.Date == examDate && r.Exam.StartTime == examTime && r.ExamId != request.ExamId);
+                if (extraRoomConflict)
+                {
+                    var conflictRoom = _context.Rooms.Find(roomId);
+                    return Json(new { status = "conflict", message = "تعارض قاعة: القاعة \"" + (conflictRoom?.Name ?? "") + "\" محجوزة كقاعة إضافية في نفس الوقت والتاريخ" });
+                }
             }
-            ViewBag.Courses = _context.Courses.ToList();
-            ViewBag.Rooms = _context.Rooms.ToList();
-            return View(exam);
+
+            // Rule 4: Doctor conflict (exclude current exam)
+            var allDoctorIds = new List<int> { request.DoctorId };
+            if (request.ExtraDoctorIds != null)
+                allDoctorIds.AddRange(request.ExtraDoctorIds.Where(id => id > 0 && id != request.DoctorId));
+
+            foreach (var doctorId in allDoctorIds)
+            {
+                var doctorConflict = _context.Monterings
+                    .Include(m => m.Exam)
+                    .Any(m => m.DoctorId == doctorId && m.Exam.ExamDate.Date == examDate && m.Exam.StartTime == examTime && m.ExamId != request.ExamId);
+                if (doctorConflict)
+                {
+                    var conflictDoctor = _context.Doctors.Find(doctorId);
+                    return Json(new { status = "conflict", message = "تعارض مراقب: الدكتور \"" + (conflictDoctor?.DoctorName ?? "") + "\" لديه امتحان آخر في نفس الوقت وهذا التاريخ" });
+                }
+            }
+
+            exam.CourseId = request.CourseId;
+            exam.RoomId = request.RoomId;
+            exam.ExamDate = request.ExamDate;
+            exam.StartTime = examTime;
+            exam.EndTime = examTime.Add(TimeSpan.FromHours(2));
+
+            _context.Monterings.RemoveRange(exam.Monitorings);
+            foreach (var doctorId in allDoctorIds)
+                _context.Monterings.Add(new Montering { DoctorId = doctorId, ExamId = exam.Id });
+
+            _context.ExamExtraRooms.RemoveRange(exam.ExtraRooms);
+            foreach (var extraRoomId in extraRoomIds)
+                _context.ExamExtraRooms.Add(new ExamExtraRoom { RoomId = extraRoomId, ExamId = exam.Id });
+
+            _context.SaveChanges();
+
+            var roomNames = room.Name;
+            if (extraRoomIds.Count > 0)
+            {
+                var extraRoomNames = _context.Rooms.Where(r => extraRoomIds.Contains(r.Id)).Select(r => r.Name).ToList();
+                roomNames += " + " + string.Join(" + ", extraRoomNames);
+            }
+
+            return Json(new { status = "success", message = "تم تعديل الامتحان بنجاح في: " + roomNames });
+        }
+
+        public IActionResult StudentExamSchedule()
+        {
+            var examMap = _context.Exams
+                .Include(e => e.Room)
+                .Include(e => e.ExtraRooms).ThenInclude(er => er.Room)
+                .ToDictionary(e => e.CourseId);
+
+            var students = _context.Students
+                .Include(s => s.RegisteredCourses)
+                    .ThenInclude(sc => sc.Course)
+                .OrderBy(s => s.Level)
+                .ThenBy(s => s.Name)
+                .ToList();
+
+            var result = students.Select(s =>
+            {
+                var examItems = s.RegisteredCourses
+                    .Where(sc => examMap.ContainsKey(sc.CourseId))
+                    .Select(sc =>
+                    {
+                        var exam = examMap[sc.CourseId];
+                        return new StudentExamItemViewModel
+                        {
+                            CourseName = sc.Course.CourseName,
+                            ExamDate = exam.ExamDate,
+                            StartTime = exam.StartTime,
+                            EndTime = exam.EndTime,
+                            RoomName = exam.Room.Name,
+                            ExtraRoomNames = exam.ExtraRooms.Select(er => er.Room.Name).ToList()
+                        };
+                    })
+                    .OrderBy(e => e.ExamDate)
+                    .ThenBy(e => e.StartTime)
+                    .ToList();
+
+                foreach (var group in examItems.GroupBy(e => new { Date = e.ExamDate.Date, e.StartTime }).Where(g => g.Count() > 1))
+                    foreach (var item in group)
+                        item.HasConflict = true;
+
+                return new StudentExamScheduleViewModel
+                {
+                    StudentId = s.Id,
+                    StudentName = s.Name,
+                    Level = s.Level,
+                    Specialization = s.Specialization,
+                    Exams = examItems,
+                    HasConflict = examItems.Any(e => e.HasConflict)
+                };
+            }).ToList();
+
+            return View(result);
         }
 
         public IActionResult DeleteExam(int id)

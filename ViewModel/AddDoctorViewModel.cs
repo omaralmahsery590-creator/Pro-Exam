@@ -52,4 +52,29 @@ namespace pro_exam.ViewModel
         public int DoctorId { get; set; }
         public int CourseId { get; set; }
     }
+
+    public class AddExamRequest
+    {
+        public int DoctorId { get; set; }
+        public int CourseId { get; set; }
+        public DateTime ExamDate { get; set; }
+        public string ExamTime { get; set; }
+        public int ExpectedStudents { get; set; }
+        public int RoomId { get; set; }
+        public List<int> ExtraDoctorIds { get; set; } = new();
+        public List<int> ExtraRoomIds { get; set; } = new();
+    }
+
+    public class EditExamRequest
+    {
+        public int ExamId { get; set; }
+        public int DoctorId { get; set; }
+        public int CourseId { get; set; }
+        public DateTime ExamDate { get; set; }
+        public string ExamTime { get; set; }
+        public int ExpectedStudents { get; set; }
+        public int RoomId { get; set; }
+        public List<int> ExtraDoctorIds { get; set; } = new();
+        public List<int> ExtraRoomIds { get; set; } = new();
+    }
 }

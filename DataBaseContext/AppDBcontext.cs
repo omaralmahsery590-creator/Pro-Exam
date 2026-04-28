@@ -69,6 +69,20 @@ namespace pro_exam.DataBaseContext
                 .WithMany(e => e.Monitorings)
                 .HasForeignKey(m => m.ExamId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // ExamExtraRoom -> Exam
+            modelBuilder.Entity<ExamExtraRoom>()
+                .HasOne(r => r.Exam)
+                .WithMany(e => e.ExtraRooms)
+                .HasForeignKey(r => r.ExamId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ExamExtraRoom -> Room
+            modelBuilder.Entity<ExamExtraRoom>()
+                .HasOne(r => r.Room)
+                .WithMany()
+                .HasForeignKey(r => r.RoomId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
         public DbSet<Doctor> Doctors { get; set; }
@@ -79,6 +93,7 @@ namespace pro_exam.DataBaseContext
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Exam> Exams { get; set; }
         public DbSet<Montering> Monterings { get; set; }
+        public DbSet<ExamExtraRoom> ExamExtraRooms { get; set; }
         public DbSet<User> Users { get; set; }
     }
 }
