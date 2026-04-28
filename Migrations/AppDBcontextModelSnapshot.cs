@@ -116,6 +116,29 @@ namespace pro_exam.Migrations
                     b.ToTable("Exams");
                 });
 
+            modelBuilder.Entity("pro_exam.Models.ExamExtraRoom", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ExamId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExamId");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("ExamExtraRooms");
+                });
+
             modelBuilder.Entity("pro_exam.Models.Montering", b =>
                 {
                     b.Property<int>("Id")
@@ -272,6 +295,25 @@ namespace pro_exam.Migrations
                     b.Navigation("Room");
                 });
 
+            modelBuilder.Entity("pro_exam.Models.ExamExtraRoom", b =>
+                {
+                    b.HasOne("pro_exam.Models.Exam", "Exam")
+                        .WithMany("ExtraRooms")
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("pro_exam.Models.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Exam");
+
+                    b.Navigation("Room");
+                });
+
             modelBuilder.Entity("pro_exam.Models.Montering", b =>
                 {
                     b.HasOne("pro_exam.Models.Doctor", "Doctor")
@@ -326,6 +368,8 @@ namespace pro_exam.Migrations
 
             modelBuilder.Entity("pro_exam.Models.Exam", b =>
                 {
+                    b.Navigation("ExtraRooms");
+
                     b.Navigation("Monitorings");
                 });
 
