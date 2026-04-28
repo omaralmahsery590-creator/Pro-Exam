@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 D:\pro-exam\pro-exam\bin\Debug\net8.0\appsettings.Development.json
 D:\pro-exam\pro-exam\bin\Debug\net8.0\appsettings.json
 D:\pro-exam\pro-exam\bin\Debug\net8.0\pro-exam.staticwebassets.runtime.json
@@ -3499,6 +3500,8 @@ C:\Users\omarz\Pro-Exam\obj\Debug\net8.0\refint\pro-exam.dll
 C:\Users\omarz\Pro-Exam\obj\Debug\net8.0\pro-exam.pdb
 C:\Users\omarz\Pro-Exam\obj\Debug\net8.0\pro-exam.genruntimeconfig.cache
 C:\Users\omarz\Pro-Exam\obj\Debug\net8.0\ref\pro-exam.dll
+=======
+>>>>>>> 2b6e0ae2b695d50432f22de5f1a99ce710ad33d1
 C:\Users\DELL\Desktop\pro Exam\pro-exam\pro-exam\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\DELL\Desktop\pro Exam\pro-exam\pro-exam\bin\Debug\net8.0\appsettings.json
 C:\Users\DELL\Desktop\pro Exam\pro-exam\pro-exam\bin\Debug\net8.0\pro-exam.staticwebassets.runtime.json
