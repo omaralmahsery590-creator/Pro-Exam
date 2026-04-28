@@ -281,6 +281,59 @@ namespace pro_exam.Controllers
             return Json(new { status = "success", message = "تم تعديل الامتحان بنجاح في: " + roomNames });
         }
 
+        public IActionResult StudentExamSchedule()
+        {
+            var examMap = _context.Exams
+                .Include(e => e.Room)
+                .Include(e => e.ExtraRooms).ThenInclude(er => er.Room)
+                .ToDictionary(e => e.CourseId);
+
+            var students = _context.Students
+                .Include(s => s.RegisteredCourses)
+                    .ThenInclude(sc => sc.Course)
+                .OrderBy(s => s.Level)
+                .ThenBy(s => s.Name)
+                .ToList();
+
+            var result = students.Select(s =>
+            {
+                var examItems = s.RegisteredCourses
+                    .Where(sc => examMap.ContainsKey(sc.CourseId))
+                    .Select(sc =>
+                    {
+                        var exam = examMap[sc.CourseId];
+                        return new StudentExamItemViewModel
+                        {
+                            CourseName = sc.Course.CourseName,
+                            ExamDate = exam.ExamDate,
+                            StartTime = exam.StartTime,
+                            EndTime = exam.EndTime,
+                            RoomName = exam.Room.Name,
+                            ExtraRoomNames = exam.ExtraRooms.Select(er => er.Room.Name).ToList()
+                        };
+                    })
+                    .OrderBy(e => e.ExamDate)
+                    .ThenBy(e => e.StartTime)
+                    .ToList();
+
+                foreach (var group in examItems.GroupBy(e => new { Date = e.ExamDate.Date, e.StartTime }).Where(g => g.Count() > 1))
+                    foreach (var item in group)
+                        item.HasConflict = true;
+
+                return new StudentExamScheduleViewModel
+                {
+                    StudentId = s.Id,
+                    StudentName = s.Name,
+                    Level = s.Level,
+                    Specialization = s.Specialization,
+                    Exams = examItems,
+                    HasConflict = examItems.Any(e => e.HasConflict)
+                };
+            }).ToList();
+
+            return View(result);
+        }
+
         public IActionResult DeleteExam(int id)
         {
             var exam = _context.Exams.Find(id);

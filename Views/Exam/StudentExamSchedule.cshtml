@@ -1,0 +1,259 @@
+@model IEnumerable<pro_exam.ViewModel.StudentExamScheduleViewModel>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جدول امتحانات الطلاب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #dce9f5, #eaf4fb);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #0d3b70, #1a6fa8);
+            color: white;
+            padding: 22px 30px;
+            border-radius: 12px;
+            margin-bottom: 28px;
+            box-shadow: 0 4px 18px rgba(13, 59, 112, 0.35);
+        }
+        .page-header h3 { font-weight: 700; margin-bottom: 4px; }
+        .page-header small { opacity: 0.85; font-size: 0.9rem; }
+        .student-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 3px 18px rgba(0,0,0,0.09);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .student-card .card-header {
+            background: linear-gradient(135deg, #0d3b70, #1a6fa8);
+            color: white;
+            padding: 14px 20px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            border: none;
+        }
+        .student-card .card-header.has-conflict {
+            background: linear-gradient(135deg, #922b21, #c0392b);
+        }
+        .student-card .card-header .student-id {
+            font-size: 0.85rem;
+            opacity: 0.85;
+            font-weight: 400;
+        }
+        .table thead th {
+            background: linear-gradient(135deg, #1a5276, #1a6fa8);
+            color: white;
+            font-weight: 600;
+            border: none;
+            text-align: center;
+            vertical-align: middle;
+            padding: 12px 10px;
+            font-size: 0.9rem;
+        }
+        .table tbody td {
+            text-align: center;
+            vertical-align: middle;
+            padding: 10px 12px;
+            border-color: #eaf4fb;
+            font-size: 0.92rem;
+        }
+        .table tbody tr:nth-child(odd)  { background-color: #f0f7ff; }
+        .table tbody tr:nth-child(even) { background-color: #ffffff; }
+        .table tbody tr.conflict-row {
+            background-color: #fde8e8 !important;
+        }
+        .conflict-badge {
+            display: inline-block;
+            background: #c0392b;
+            color: white;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .badge-room {
+            display: inline-block;
+            background: #e8f4fd;
+            color: #0d3b70;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin: 2px;
+        }
+        .badge-room.extra {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .level-badge {
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 2px 10px;
+            font-size: 0.82rem;
+            margin-right: 8px;
+        }
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+        .no-exams-row td {
+            color: #95a5a6;
+            font-style: italic;
+        }
+        .summary-bar {
+            background: white;
+            border-radius: 10px;
+            padding: 14px 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .summary-bar .stat { font-size: 0.93rem; color: #555; }
+        .summary-bar .stat strong { color: #0d3b70; font-size: 1.05rem; }
+        .summary-bar .stat.danger strong { color: #c0392b; }
+    </style>
+</head>
+<body>
+<div class="container mt-4 mb-5">
+
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-user-graduate ml-2"></i>
+                جدول امتحانات الطلاب
+            </h3>
+            <small>عرض مواعيد امتحانات كل طالب مع الكشف عن التعارضات الزمنية</small>
+        </div>
+        <div>
+            <a href="@Url.Action("ExamDashBoard", "Exam")" class="btn btn-light btn-sm" style="border-radius:8px; font-weight:600;">
+                <i class="fas fa-arrow-right ml-1"></i> العودة لجدول الامتحانات
+            </a>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        var totalStudents = Model.Count();
+        var conflictCount = Model.Count(s => s.HasConflict);
+
+        <div class="summary-bar">
+            <div class="stat">
+                <i class="fas fa-users text-primary ml-1"></i>
+                إجمالي الطلاب: <strong>@totalStudents</strong>
+            </div>
+            <div class="stat @(conflictCount > 0 ? "danger" : "")">
+                <i class="fas fa-exclamation-triangle @(conflictCount > 0 ? "text-danger" : "text-muted") ml-1"></i>
+                طلاب لديهم تعارض: <strong>@conflictCount</strong>
+            </div>
+        </div>
+
+        @foreach (var student in Model)
+        {
+            <div class="student-card card">
+                <div class="card-header @(student.HasConflict ? "has-conflict" : "") d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-user-circle ml-2"></i>
+                        @student.StudentName
+                        <span class="student-id mr-3">| الرقم: @student.StudentId</span>
+                        @if (student.HasConflict)
+                        {
+                            <span class="badge badge-light text-danger mr-2" style="font-size:0.8rem;">
+                                <i class="fas fa-exclamation-circle"></i> يوجد تعارض
+                            </span>
+                        }
+                    </div>
+                    <div style="font-size:0.85rem; opacity:0.9;">
+                        <span class="level-badge">المستوى @student.Level</span>
+                        <span>@student.Specialization</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if (student.Exams.Any())
+                    {
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اسم المادة</th>
+                                    <th>تاريخ الامتحان</th>
+                                    <th>وقت البداية</th>
+                                    <th>وقت النهاية</th>
+                                    <th>القاعة المحجوزة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < student.Exams.Count; i++)
+                                {
+                                    var exam = student.Exams[i];
+                                    <tr class="@(exam.HasConflict ? "conflict-row" : "")">
+                                        <td><strong>@(i + 1)</strong></td>
+                                        <td>
+                                            @exam.CourseName
+                                            @if (exam.HasConflict)
+                                            {
+                                                <br />
+                                                <span class="conflict-badge">
+                                                    <i class="fas fa-exclamation-triangle"></i> يوجد تعارض في هذا الموعد
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>@exam.ExamDate.ToString("yyyy-MM-dd")</td>
+                                        <td>@exam.StartTime.ToString(@"hh\:mm")</td>
+                                        <td>@exam.EndTime.ToString(@"hh\:mm")</td>
+                                        <td>
+                                            <span class="badge-room">
+                                                <i class="fas fa-door-open"></i> @exam.RoomName
+                                            </span>
+                                            @if (exam.ExtraRoomNames != null && exam.ExtraRoomNames.Any())
+                                            {
+                                                @foreach (var extra in exam.ExtraRoomNames)
+                                                {
+                                                    <span class="badge-room extra">
+                                                        <i class="fas fa-plus-circle"></i> @extra
+                                                    </span>
+                                                }
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-center text-muted" style="font-size:0.9rem;">
+                            <i class="fas fa-calendar-times ml-1"></i>
+                            لا توجد امتحانات مجدولة لهذا الطالب حتى الآن
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="card-table bg-white rounded" style="border-radius:12px; box-shadow:0 3px 18px rgba(0,0,0,0.09);">
+            <div class="empty-state">
+                <i class="fas fa-user-slash fa-3x mb-3 text-muted"></i>
+                <h5>لا يوجد طلاب مسجلون</h5>
+                <p>لم يتم تسجيل أي طالب في النظام بعد</p>
+            </div>
+        </div>
+    }
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
