@@ -1,91 +1,211 @@
-﻿<!DOCTYPE html>
+@{ Layout = null; }
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>تسجيل الدخول - IT Scheduler</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
+        :root {
+            --primary: #0d47a1;
+            --primary-light: #1565c0;
+            --primary-soft: #e3f2fd;
+            --accent: #42a5f5;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background: linear-gradient(to right, #b3cde0, #6497b1);
-            font-family: Arial, sans-serif;
-        }
-
-        .login-container {
-            background-color: #ffffff;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            max-width: 400px;
-            margin: 80px auto;
-        }
-
-        h2 {
-            color: #003366;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .btn-primary {
+            min-height: 100vh;
             background-color: #0d47a1;
-            border-color: #0d47a1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        .btn-primary:hover {
-            background-color: #1565c0;
+        .login-card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 42px 38px;
+            width: 100%;
+            max-width: 430px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
         }
-
+        .logo-area {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo-area img {
+            height: 72px;
+            width: auto;
+            margin-bottom: 14px;
+        }
+        .logo-area h4 {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.45rem;
+            margin: 0;
+        }
+        .logo-area p {
+            color: #78909c;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+        .form-label {
+            color: #37474f;
+            font-weight: 600;
+            font-size: 0.88rem;
+            margin-bottom: 6px;
+        }
+        .input-group-text {
+            background: var(--primary-soft);
+            border-color: #bbdefb;
+            color: var(--primary);
+        }
         .form-control {
-            border: 1px solid #1e88e5;
-            background-color: #f0f7ff;
+            border-color: #bbdefb;
+            background: var(--primary-soft);
             color: #0d47a1;
         }
-
         .form-control:focus {
-            box-shadow: 0 0 5px rgba(30, 136, 229, 0.5);
-            border-color: #1565c0;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 0.2rem rgba(21, 101, 192, 0.18);
+            background: #fff;
         }
-
-        .generate-btn {
-            margin-top: 20px;
+        .form-control::placeholder { color: #90a4ae; }
+        .btn-login {
+            background: var(--primary);
+            border: none;
+            border-radius: 9px;
+            padding: 13px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            width: 100%;
+            transition: background 0.25s, transform 0.1s;
+            cursor: pointer;
+        }
+        .btn-login:hover { background: var(--primary-light); }
+        .btn-login:active { transform: scale(0.98); }
+        .btn-otp {
+            background: transparent;
+            border: 2px solid var(--accent);
+            border-radius: 9px;
+            padding: 11px;
+            font-size: 0.92rem;
+            color: var(--accent);
+            width: 100%;
+            transition: all 0.25s;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-otp:hover { background: var(--accent); color: #fff; }
+        .divider {
             text-align: center;
+            position: relative;
+            margin: 22px 0;
+            color: #90a4ae;
+            font-size: 0.78rem;
         }
-
-        .generate-btn button {
-            background-color: #42a5f5;
-            border-color: #42a5f5;
-            color: white;
+        .divider::before, .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 43%;
+            height: 1px;
+            background: #e0e0e0;
         }
-
-        .generate-btn button:hover {
-            background-color: #1e88e5;
+        .divider::before { right: 0; }
+        .divider::after { left: 0; }
+        .error-msg {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 18px;
         }
+        .extras {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .form-check-label { font-size: 0.82rem; color: #546e7a; }
+        .forgot-link { color: var(--primary-light); font-size: 0.82rem; text-decoration: none; }
+        .forgot-link:hover { text-decoration: underline; }
     </style>
 </head>
-
 <body>
-    <div class="login-container">
-        <h2>Login</h2>
+    <div class="login-card">
+        <div class="logo-area">
+            <img src="~/images/Pro_Exam.png" alt="Pro Exam" />
+            <h4>IT Scheduler</h4>
+            <p>نظام إدارة الامتحانات الجامعية</p>
+        </div>
+
+        @if (ViewBag.ErrorMessage != null)
+        {
+            <div class="error-msg">
+                <i class="fas fa-exclamation-circle me-1"></i>@ViewBag.ErrorMessage
+            </div>
+        }
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div style="background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;border-radius:8px;padding:10px 14px;font-size:0.85rem;text-align:center;margin-bottom:18px;">
+                <i class="fas fa-check-circle me-1"></i>@TempData["SuccessMessage"]
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="error-msg">
+                <i class="fas fa-exclamation-circle me-1"></i>@TempData["ErrorMessage"]
+            </div>
+        }
+
         <form asp-action="Login" method="post">
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" name="Email" class="form-control" required />
+            <div class="mb-3">
+                <label class="form-label">البريد الإلكتروني</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    <input type="email" name="Email" class="form-control" placeholder="أدخل بريدك الإلكتروني" required />
+                </div>
             </div>
-            <div class="form-group">
-                <label>OTP</label>
-                <input type="text" name="OTP" class="form-control" required />
+            <div class="mb-3">
+                <label class="form-label">رمز التحقق (OTP)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-key"></i></span>
+                    <input type="text" name="OTP" class="form-control" placeholder="أدخل رمز التحقق المرسل" required maxlength="6" />
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Login</button>
+           
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt me-2"></i>تسجيل الدخول
+            </button>
         </form>
 
-        <div class="generate-btn">
-            <form asp-action="UserCode" method="post">
-                <button type="submit" class="btn btn-primary">Generate Code</button>
-            </form>
-        </div>
-    </div>
-</body>
+        <div class="divider">أو</div>
 
+        <form asp-action="UserCode" method="post" id="otpForm">
+            <input type="hidden" name="email" id="otpEmail" />
+            <button type="submit" class="btn-otp">
+                <i class="fas fa-paper-plane me-2"></i>إرسال رمز التحقق على البريد
+            </button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('otpForm').addEventListener('submit', function (e) {
+            var emailVal = document.querySelector('input[name="Email"]').value.trim();
+            if (!emailVal) {
+                e.preventDefault();
+                alert('الرجاء إدخال البريد الإلكتروني أولاً');
+                return;
+            }
+            document.getElementById('otpEmail').value = emailVal;
+        });
+    </script>
+</body>
 </html>

@@ -4087,3 +4087,6 @@ C:\Users\DELL\Desktop\pro Exam\pro-exam\pro-exam\obj\Debug\net8.0\refint\pro-exa
 C:\Users\DELL\Desktop\pro Exam\pro-exam\pro-exam\obj\Debug\net8.0\pro-exam.pdb
 C:\Users\DELL\Desktop\pro Exam\pro-exam\pro-exam\obj\Debug\net8.0\pro-exam.genruntimeconfig.cache
 C:\Users\DELL\Desktop\pro Exam\pro-exam\pro-exam\obj\Debug\net8.0\ref\pro-exam.dll
+C:\Users\DELL\Desktop\pro Exam\pro-exam\pro-exam\bin\Debug\net8.0\BouncyCastle.Cryptography.dll
+C:\Users\DELL\Desktop\pro Exam\pro-exam\pro-exam\bin\Debug\net8.0\MailKit.dll
+C:\Users\DELL\Desktop\pro Exam\pro-exam\pro-exam\bin\Debug\net8.0\MimeKit.dll
