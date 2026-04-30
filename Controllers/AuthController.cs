@@ -75,24 +75,28 @@ namespace pro_exam.Controllers
 
 
 
-        [HttpPost]
-        public async Task<IActionResult> UserCode()
-        {
-            var User = await _context.Users.FindAsync(1);
+       [HttpPost]
+public async Task<IActionResult> UserCode(string email)
+{
+    var user = await _context.Users
+        .FirstOrDefaultAsync(u => u.Email == email);
 
-            if (User == null || string.IsNullOrWhiteSpace(User.Email))
-            {
-                ViewBag.ErrorMessage = "User not found or email is not configured.";
-                return View("Login");
-            }
+    if (user == null)
+    {
+        ViewBag.ErrorMessage = "User not found";
+        return View("Login");
+    }
 
-            User.OTP = GenerateOTP(6);
-            User.OTPExpirationTime = DateTime.Now.AddMinutes(2);
-            _context.Users.Update(User);
-            await _context.SaveChangesAsync();
-            await mail.SendVerificationEmailAsync(User.Email, User.OTP);
-            return RedirectToAction("Login", "Auth");
-        }
+    user.OTP = GenerateOTP(6);
+    user.OTPExpirationTime = DateTime.Now.AddMinutes(2);
+
+    _context.Users.Update(user);
+    await _context.SaveChangesAsync();
+
+    await mail.SendVerificationEmailAsync(user.Email, user.OTP);
+
+    return RedirectToAction("Login", "Auth");
+}
 
         // Generate OTP
         private string GenerateOTP(int length = 6)
