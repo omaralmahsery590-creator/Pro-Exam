@@ -61,8 +61,8 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
 app.UseMiddleware<JwtSessionMiddleware>();
-app.UseAuthorization();
 app.UseAuthentication();
+app.UseAuthorization();
 
 
 app.MapControllerRoute(
@@ -70,4 +70,3 @@ app.MapControllerRoute(
     pattern: "{controller=Auth}/{action=Login}/{id?}");
 
 app.Run();
-
