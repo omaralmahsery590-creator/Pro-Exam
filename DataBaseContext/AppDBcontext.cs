@@ -42,6 +42,11 @@ namespace pro_exam.DataBaseContext
                 .HasForeignKey(dc => dc.CourseId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Course ID is user-supplied (not auto-generated)
+            modelBuilder.Entity<Course>()
+                .Property(c => c.Id)
+                .ValueGeneratedNever();
+
             // Exam -> Course
             modelBuilder.Entity<Exam>()
                 .HasOne(e => e.Course)

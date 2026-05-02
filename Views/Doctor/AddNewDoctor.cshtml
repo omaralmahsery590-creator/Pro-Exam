@@ -475,6 +475,10 @@
         }
 
         var courseId      = courseIdRaw ? parseInt(courseIdRaw) : null;
+
+        if (modalMode === 'add' && (!courseId || courseId <= 0)) {
+            Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى إدخال رقم المادة', confirmButtonText: 'حسناً', confirmButtonColor: '#0d3b70' }); return;
+        }
         var level         = parseInt(levelRaw);
         var studentsCount = parseInt(studentsCountRaw);
 

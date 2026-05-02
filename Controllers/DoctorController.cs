@@ -77,8 +77,12 @@ namespace pro_exam.Controllers
 
             if (course == null)
             {
+                if (!request.CourseId.HasValue || request.CourseId.Value <= 0)
+                    return Json(new { success = false, message = "يرجى إدخال رقم المادة لإضافة مادة جديدة" });
+
                 course = new Course
                 {
+                    Id = request.CourseId.Value,
                     CourseName = courseName,
                     Specialization = specialization,
                     Level = request.Level,

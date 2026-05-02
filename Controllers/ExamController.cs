@@ -63,6 +63,7 @@ namespace pro_exam.Controllers
                 return Json(new { status = "error", message = "وقت الامتحان غير صحيح" });
 
             var examDate = request.ExamDate.Date;
+            var examEndTime = examTime.Add(TimeSpan.FromHours(2));
 
             // Rule 1: Duplicate exam - same course cannot be scheduled more than once
             if (_context.Exams.Any(e => e.CourseId == request.CourseId))
@@ -74,39 +75,39 @@ namespace pro_exam.Controllers
             if (sameLevelCount >= 2)
                 return Json(new { status = "conflict", message = $"تعارض المستوى: وصل الحد الأقصى (2 امتحانات) لمستوى {course.Level} في يوم {examDate:yyyy-MM-dd}" });
 
-            // Rule 3: Level time conflict - no two exams of the same level at the same time on the same date
+            // Rule 3: Level time conflict - no two exams of the same level overlap within the 2-hour window
             bool levelTimeConflict = _context.Exams.Include(e => e.Course)
-                .Any(e => e.ExamDate.Date == examDate && e.StartTime == examTime && e.Course.Level == course.Level);
+                .Any(e => e.ExamDate.Date == examDate && e.StartTime < examEndTime && e.EndTime > examTime && e.Course.Level == course.Level);
             if (levelTimeConflict)
-                return Json(new { status = "conflict", message = $"تعارض المستوى والوقت: يوجد امتحان آخر لمستوى {course.Level} في نفس الساعة ونفس التاريخ" });
+                return Json(new { status = "conflict", message = $"عذراً، هذا الوقت يقع ضمن فترة امتحان آخر مستمر لمدة ساعتين (المستوى {course.Level})" });
 
             // Collect all rooms to check (primary + extra), deduped
             var extraRoomIds = request.ExtraRoomIds?.Where(id => id > 0 && id != request.RoomId).Distinct().ToList() ?? new List<int>();
             var allRoomIds = new List<int> { request.RoomId };
             allRoomIds.AddRange(extraRoomIds);
 
-            // Rule 1: No two exams sharing a room (primary or extra) at the same date and time
+            // Rule 4: No two exams sharing a room (primary or extra) within the 2-hour window
             foreach (var roomId in allRoomIds)
             {
                 var primaryRoomConflict = _context.Exams
-                    .Any(e => e.RoomId == roomId && e.ExamDate.Date == examDate && e.StartTime == examTime);
+                    .Any(e => e.RoomId == roomId && e.ExamDate.Date == examDate && e.StartTime < examEndTime && e.EndTime > examTime);
                 if (primaryRoomConflict)
                 {
                     var conflictRoom = _context.Rooms.Find(roomId);
-                    return Json(new { status = "conflict", message = "تعارض قاعة: القاعة \"" + (conflictRoom?.Name ?? "") + "\" محجوزة في نفس الوقت والتاريخ" });
+                    return Json(new { status = "conflict", message = "عذراً، هذا الوقت يقع ضمن فترة امتحان آخر مستمر لمدة ساعتين (القاعة \"" + (conflictRoom?.Name ?? "") + "\")" });
                 }
 
                 var extraRoomConflict = _context.ExamExtraRooms
                     .Include(r => r.Exam)
-                    .Any(r => r.RoomId == roomId && r.Exam.ExamDate.Date == examDate && r.Exam.StartTime == examTime);
+                    .Any(r => r.RoomId == roomId && r.Exam.ExamDate.Date == examDate && r.Exam.StartTime < examEndTime && r.Exam.EndTime > examTime);
                 if (extraRoomConflict)
                 {
                     var conflictRoom = _context.Rooms.Find(roomId);
-                    return Json(new { status = "conflict", message = "تعارض قاعة: القاعة \"" + (conflictRoom?.Name ?? "") + "\" محجوزة كقاعة إضافية في نفس الوقت والتاريخ" });
+                    return Json(new { status = "conflict", message = "عذراً، هذا الوقت يقع ضمن فترة امتحان آخر مستمر لمدة ساعتين (القاعة \"" + (conflictRoom?.Name ?? "") + "\" إضافية)" });
                 }
             }
 
-            // Rule 2: No doctor (primary or extra) can proctor two exams at the same date and time
+            // Rule 5: No doctor (primary or extra) can proctor two exams within the 2-hour window
             var allDoctorIds = new List<int> { request.DoctorId };
             if (request.ExtraDoctorIds != null)
                 allDoctorIds.AddRange(request.ExtraDoctorIds.Where(id => id > 0 && id != request.DoctorId));
@@ -115,11 +116,11 @@ namespace pro_exam.Controllers
             {
                 var doctorConflict = _context.Monterings
                     .Include(m => m.Exam)
-                    .Any(m => m.DoctorId == doctorId && m.Exam.ExamDate.Date == examDate && m.Exam.StartTime == examTime);
+                    .Any(m => m.DoctorId == doctorId && m.Exam.ExamDate.Date == examDate && m.Exam.StartTime < examEndTime && m.Exam.EndTime > examTime);
                 if (doctorConflict)
                 {
                     var conflictDoctor = _context.Doctors.Find(doctorId);
-                    return Json(new { status = "conflict", message = "تعارض مراقب: الدكتور \"" + (conflictDoctor?.DoctorName ?? "") + "\" لديه امتحان آخر في نفس الوقت وهذا التاريخ" });
+                    return Json(new { status = "conflict", message = "عذراً، هذا الوقت يقع ضمن فترة امتحان آخر مستمر لمدة ساعتين (الدكتور \"" + (conflictDoctor?.DoctorName ?? "") + "\")" });
                 }
             }
 
@@ -196,6 +197,7 @@ namespace pro_exam.Controllers
                 return Json(new { status = "error", message = "وقت الامتحان غير صحيح" });
 
             var examDate = request.ExamDate.Date;
+            var examEndTime = examTime.Add(TimeSpan.FromHours(2));
 
             // Rule 1: Duplicate exam (exclude current exam)
             if (_context.Exams.Any(e => e.CourseId == request.CourseId && e.Id != request.ExamId))
@@ -207,38 +209,38 @@ namespace pro_exam.Controllers
             if (sameLevelCount >= 2)
                 return Json(new { status = "conflict", message = $"تعارض المستوى: وصل الحد الأقصى (2 امتحانات) لمستوى {course.Level} في يوم {examDate:yyyy-MM-dd}" });
 
-            // Rule 3: Level time conflict - no two exams of the same level at the same time on the same date (exclude current exam)
+            // Rule 3: Level time conflict - overlap within 2-hour window (exclude current exam)
             bool levelTimeConflict = _context.Exams.Include(e => e.Course)
-                .Any(e => e.ExamDate.Date == examDate && e.StartTime == examTime && e.Course.Level == course.Level && e.Id != request.ExamId);
+                .Any(e => e.ExamDate.Date == examDate && e.StartTime < examEndTime && e.EndTime > examTime && e.Course.Level == course.Level && e.Id != request.ExamId);
             if (levelTimeConflict)
-                return Json(new { status = "conflict", message = $"تعارض المستوى والوقت: يوجد امتحان آخر لمستوى {course.Level} في نفس الساعة ونفس التاريخ" });
+                return Json(new { status = "conflict", message = $"عذراً، هذا الوقت يقع ضمن فترة امتحان آخر مستمر لمدة ساعتين (المستوى {course.Level})" });
 
             var extraRoomIds = request.ExtraRoomIds?.Where(id => id > 0 && id != request.RoomId).Distinct().ToList() ?? new List<int>();
             var allRoomIds = new List<int> { request.RoomId };
             allRoomIds.AddRange(extraRoomIds);
 
-            // Rule 3: Room conflict (exclude current exam)
+            // Rule 4: Room conflict within 2-hour window (exclude current exam)
             foreach (var roomId in allRoomIds)
             {
                 var primaryRoomConflict = _context.Exams
-                    .Any(e => e.RoomId == roomId && e.ExamDate.Date == examDate && e.StartTime == examTime && e.Id != request.ExamId);
+                    .Any(e => e.RoomId == roomId && e.ExamDate.Date == examDate && e.StartTime < examEndTime && e.EndTime > examTime && e.Id != request.ExamId);
                 if (primaryRoomConflict)
                 {
                     var conflictRoom = _context.Rooms.Find(roomId);
-                    return Json(new { status = "conflict", message = "تعارض قاعة: القاعة \"" + (conflictRoom?.Name ?? "") + "\" محجوزة في نفس الوقت والتاريخ" });
+                    return Json(new { status = "conflict", message = "عذراً، هذا الوقت يقع ضمن فترة امتحان آخر مستمر لمدة ساعتين (القاعة \"" + (conflictRoom?.Name ?? "") + "\")" });
                 }
 
                 var extraRoomConflict = _context.ExamExtraRooms
                     .Include(r => r.Exam)
-                    .Any(r => r.RoomId == roomId && r.Exam.ExamDate.Date == examDate && r.Exam.StartTime == examTime && r.ExamId != request.ExamId);
+                    .Any(r => r.RoomId == roomId && r.Exam.ExamDate.Date == examDate && r.Exam.StartTime < examEndTime && r.Exam.EndTime > examTime && r.ExamId != request.ExamId);
                 if (extraRoomConflict)
                 {
                     var conflictRoom = _context.Rooms.Find(roomId);
-                    return Json(new { status = "conflict", message = "تعارض قاعة: القاعة \"" + (conflictRoom?.Name ?? "") + "\" محجوزة كقاعة إضافية في نفس الوقت والتاريخ" });
+                    return Json(new { status = "conflict", message = "عذراً، هذا الوقت يقع ضمن فترة امتحان آخر مستمر لمدة ساعتين (القاعة \"" + (conflictRoom?.Name ?? "") + "\" إضافية)" });
                 }
             }
 
-            // Rule 4: Doctor conflict (exclude current exam)
+            // Rule 5: Doctor conflict within 2-hour window (exclude current exam)
             var allDoctorIds = new List<int> { request.DoctorId };
             if (request.ExtraDoctorIds != null)
                 allDoctorIds.AddRange(request.ExtraDoctorIds.Where(id => id > 0 && id != request.DoctorId));
@@ -247,11 +249,11 @@ namespace pro_exam.Controllers
             {
                 var doctorConflict = _context.Monterings
                     .Include(m => m.Exam)
-                    .Any(m => m.DoctorId == doctorId && m.Exam.ExamDate.Date == examDate && m.Exam.StartTime == examTime && m.ExamId != request.ExamId);
+                    .Any(m => m.DoctorId == doctorId && m.Exam.ExamDate.Date == examDate && m.Exam.StartTime < examEndTime && m.Exam.EndTime > examTime && m.ExamId != request.ExamId);
                 if (doctorConflict)
                 {
                     var conflictDoctor = _context.Doctors.Find(doctorId);
-                    return Json(new { status = "conflict", message = "تعارض مراقب: الدكتور \"" + (conflictDoctor?.DoctorName ?? "") + "\" لديه امتحان آخر في نفس الوقت وهذا التاريخ" });
+                    return Json(new { status = "conflict", message = "عذراً، هذا الوقت يقع ضمن فترة امتحان آخر مستمر لمدة ساعتين (الدكتور \"" + (conflictDoctor?.DoctorName ?? "") + "\")" });
                 }
             }
 
