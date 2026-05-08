@@ -1,7 +1,7 @@
 ﻿using Nancy.Json;
 namespace pro_exam.Authorization
 {
-    public class SecuredHelper//هنا تعريف الكلاس اللي راح يستخدم لاستخراج البيانات من التوكن
+    public class SecuredHelper//هنا تعريف الكلاس اللي راح يحتوي على الدوال اللي راح تستخدم لاستخراج البيانات من التوكن
     {
         public static JwtAuthResponse GetInfoFromToken(string Token)//هنا تعريف الدالة اللي راح تستخدم لاستخراج البيانات من التوكن
         {

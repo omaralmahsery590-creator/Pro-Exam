@@ -8,7 +8,7 @@ namespace pro_exam.Authorization;
 
 public class Authentication : IAuthentication<UserViewModel>
 {
-    private readonly IConfiguration _Configuration;
+    private readonly IConfiguration _Configuration;//to read the key from appsettings.json
     public Authentication(IConfiguration configuration)
     {
         _Configuration = configuration;
@@ -16,20 +16,20 @@ public class Authentication : IAuthentication<UserViewModel>
     public string GetJsonWebToken(UserViewModel entity)
     {
 
-        var SecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuration["Jwt:Key"]));
-        var Credentials = new SigningCredentials(SecurityKey, SecurityAlgorithms.HmacSha256);
+        var SecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuration["Jwt:Key"]));//مفتاح التشفير
+        var Credentials = new SigningCredentials(SecurityKey, SecurityAlgorithms.HmacSha256);//header
 
-        var claims = new[]
+        var claims = new[]//payload
         {
                 new Claim(JwtRegisteredClaimNames.NameId,entity.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.GivenName,entity.Name),
                 new Claim(JwtRegisteredClaimNames.Email,entity.Email),
-                new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())//to make the token unique
             };
 
-        var Token = new JwtSecurityToken(
-            issuer: _Configuration["Jwt:Issuer"],
-            audience: _Configuration["Jwt:Audience"],
+        var Token = new JwtSecurityToken(//to create the token
+            issuer: _Configuration["Jwt:Issuer"],//جهة إصدار التوكن
+            audience: _Configuration["Jwt:Audience"],//جهة استقبال التوكن
             claims: claims,
             expires: Convert.ToDateTime(DateTime.Now.AddDays(1)),
             signingCredentials: Credentials

@@ -13711,23 +13711,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\omarz\\.nuget\\packages\\": {},
+    "C:\\Users\\pc\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\omarz\\Pro-Exam\\pro-exam.csproj",
+      "projectUniqueName": "C:\\Users\\pc\\.vscode\\Pro-Exam\\pro-exam.csproj",
       "projectName": "pro-exam",
-      "projectPath": "C:\\Users\\omarz\\Pro-Exam\\pro-exam.csproj",
-      "packagesPath": "C:\\Users\\omarz\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\omarz\\Pro-Exam\\obj\\",
+      "projectPath": "C:\\Users\\pc\\.vscode\\Pro-Exam\\pro-exam.csproj",
+      "packagesPath": "C:\\Users\\pc\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\pc\\.vscode\\Pro-Exam\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\omarz\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\pc\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -13850,7 +13850,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.200/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
