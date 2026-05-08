@@ -27,14 +27,22 @@ namespace pro_exam.Controllers
         {
             return View();
         }
+<<<<<<< HEAD
         [HttpPost]// Action method to handle login form submission
+=======
+        [HttpPost]//send data to database
+>>>>>>> cd40f13 (update project)
         public async Task<IActionResult> Login(string Email, string OTP)
         {
             try
             {
                 // Retrieve the user by EmployeeNumber
                 //var hashedpassword = BCrypt.Net.BCrypt.HashPassword(loginModel.Password);
+<<<<<<< HEAD
                 var user = await _context.Users.Where(x => x.Email == Email && x.OTP == OTP).SingleOrDefaultAsync();// Find the user with the provided email and OTP
+=======
+                var user = await _context.Users.Where(x => x.Email == Email && x.OTP == OTP).SingleOrDefaultAsync();//للتأكد  من قاعدة البيانات
+>>>>>>> cd40f13 (update project)
                 if (user == null)
                 {
                     ViewBag.ErrorMessage = "Email or Password not Correct";

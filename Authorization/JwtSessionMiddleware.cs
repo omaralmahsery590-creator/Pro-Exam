@@ -3,7 +3,7 @@ public class JwtSessionMiddleware// Middleware class to handle JWT token in sess
 {
     private readonly RequestDelegate _next;
 
-    public JwtSessionMiddleware(RequestDelegate next)
+    public JwtSessionMiddleware(RequestDelegate next)//التأكد من أن كل طلب (Request) يخرج من المتصفح باتجاه السيرفر يحمل معه "هوية الطالب" (التوكن) بشكل تلقائي.
     {
         _next = next;
     }
