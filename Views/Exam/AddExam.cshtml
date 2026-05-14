@@ -230,7 +230,7 @@
                 <label for="inputDate">
                     <i class="fas fa-calendar-alt ml-1"></i> تاريخ الامتحان
                 </label>
-                <input type="date" id="inputDate" class="form-control" required>
+               <input type="date" id="inputDate" class="form-control" min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")"required>
             </div>
             <div class="form-group col-md-6">
                 <label for="inputTime">

@@ -15,7 +15,7 @@ namespace pro_exam.ViewModel
         public List<SelectListItem> AvailableDoctors { get; set; } = new();
     }
 
-    public class DoctorCourseRowViewModel
+public class DoctorCourseRowViewModel
     {
         public int DoctorId { get; set; }
         public string DoctorName { get; set; }

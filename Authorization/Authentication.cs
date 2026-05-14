@@ -16,17 +16,10 @@ public class Authentication : IAuthentication<UserViewModel>
     public string GetJsonWebToken(UserViewModel entity)
     {
 
-<<<<<<< HEAD
         var SecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuration["Jwt:Key"]));//مفتاح التشفير
         var Credentials = new SigningCredentials(SecurityKey, SecurityAlgorithms.HmacSha256);//header
 
         var claims = new[]//payload
-=======
-        var SecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuration["Jwt:Key"]));
-        var Credentials = new SigningCredentials(SecurityKey, SecurityAlgorithms.HmacSha256);//header
-
-        var claims = new[]//Payload
->>>>>>> cd40f13 (update project)
         {
                 new Claim(JwtRegisteredClaimNames.NameId,entity.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.GivenName,entity.Name),
@@ -34,17 +27,12 @@ public class Authentication : IAuthentication<UserViewModel>
                 new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())//to make the token unique
             };
 
-<<<<<<< HEAD
         var Token = new JwtSecurityToken(//to create the token
             issuer: _Configuration["Jwt:Issuer"],//جهة إصدار التوكن
-=======
-        var Token = new JwtSecurityToken(
-            issuer: _Configuration["Jwt:Issuer"],//جهة اصدار التوكن
->>>>>>> cd40f13 (update project)
             audience: _Configuration["Jwt:Audience"],//جهة استقبال التوكن
             claims: claims,
-            expires: Convert.ToDateTime(DateTime.Now.AddDays(1)),//صلاحية التوكن
-            signingCredentials: Credentials//التوقيع الرقمي
+            expires: Convert.ToDateTime(DateTime.Now.AddDays(1)),
+            signingCredentials: Credentials
             );
 
         return new JwtSecurityTokenHandler().WriteToken(Token);
@@ -62,6 +50,7 @@ public class JwtAuthResponse
     public string? iss { get; set; }
     public string? aud { get; set; }
 
-    
+    //public string? Email { get; set; }
+    //public string? UserType { get; set; }
 
 }

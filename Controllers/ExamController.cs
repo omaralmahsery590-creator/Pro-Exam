@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeOpenXml;
+using OfficeOpenXml;//تُستخدم عادةً إذا كان هناك كود لتصدير أو استيراد ملفات Excel
 using pro_exam.DataBaseContext;
 using pro_exam.Models;
 using pro_exam.ViewModel;
@@ -63,7 +63,18 @@ namespace pro_exam.Controllers
                 return Json(new { status = "error", message = "وقت الامتحان غير صحيح" });
 
             var examDate = request.ExamDate.Date;
-            var examEndTime = examTime.Add(TimeSpan.FromHours(2));
+
+            if (examDate <= DateTime.Today)
+              {
+               return Json(new
+              {
+               status = "error",
+                message = "يجب إدخال تاريخ مستقبلي للامتحان"
+              });
+              }
+
+var examEndTime = examTime.Add(TimeSpan.FromHours(2));
+           
 
             // Rule 1: Duplicate exam - same course cannot be scheduled more than once
             if (_context.Exams.Any(e => e.CourseId == request.CourseId))
@@ -196,8 +207,18 @@ namespace pro_exam.Controllers
             if (!TimeSpan.TryParse(request.ExamTime, out TimeSpan examTime))
                 return Json(new { status = "error", message = "وقت الامتحان غير صحيح" });
 
-            var examDate = request.ExamDate.Date;
-            var examEndTime = examTime.Add(TimeSpan.FromHours(2));
+                var examDate = request.ExamDate.Date;
+
+               if (examDate <= DateTime.Today)
+                 {
+                   return Json(new
+                 {
+                  status = "error",
+                  message = "يجب إدخال تاريخ مستقبلي للامتحان"
+                   });
+                  }
+
+var examEndTime = examTime.Add(TimeSpan.FromHours(2));
 
             // Rule 1: Duplicate exam (exclude current exam)
             if (_context.Exams.Any(e => e.CourseId == request.CourseId && e.Id != request.ExamId))

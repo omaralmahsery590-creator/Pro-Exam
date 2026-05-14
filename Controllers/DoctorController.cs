@@ -9,7 +9,7 @@ using pro_exam.ViewModel;
 
 namespace pro_exam.Controllers
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]//يمنع أي شخص غير مسجل الدخول من الوصول لهذه الصفحة.
     public class DoctorController : Controller
     {
         private readonly AppDBcontext _context;
@@ -64,7 +64,7 @@ namespace pro_exam.Controllers
             if (request.Level < 1 || request.Level > 4)
                 return Json(new { success = false, message = "يرجى اختيار مستوى صحيح" });
 
-            var doctorName = request.DoctorName.Trim();
+            var doctorName = request.DoctorName.Trim();//إزالة أي مسافات زائدة قبل أو بعد النص
             var courseName = request.CourseName.Trim();
             var specialization = request.Specialization.Trim();
 

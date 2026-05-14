@@ -79,7 +79,7 @@
             color: #b0c4de;
         }
 
-        /* Modal header: title on the right (RTL start), X button on the left */
+        
         .modal-header {
             background-color: #0d3b70;
             color: white;
@@ -89,18 +89,13 @@
             justify-content: space-between;
         }
 
-        .modal-header .modal-title { font-weight: 700; }
+        .modal-header .modal-title 
+        { font-weight: 700;
+         margin-right:0  !important;
+        margin-left: auto !important; }
 
-        /* Force the close button to the left side in RTL */
-        .modal-header .close {
-            color: white;
-            opacity: 0.9;
-            float: none;
-            margin: 0;
-            margin-right: auto !important;
-            margin-left: 0 !important;
-            order: -1;
-        }
+        
+      
 
         .form-control:focus,
         .custom-select:focus {
@@ -108,7 +103,10 @@
             box-shadow: 0 0 0 0.2rem rgba(26,111,168,0.25);
         }
 
-        label { font-weight: 600; color: #0d3b70; }
+        label 
+        {
+             font-weight: 600; color: #0d3b70;
+         }
 
         #saveBtn {
             background-color: #1a6fa8;
@@ -146,7 +144,7 @@
                 <i class="fas fa-chalkboard-teacher ml-2"></i>
                 إدارة الدكاترة والمواد
             </h3>
-            <small>عرض جميع الدكاترة والمواد التي يدرّسونها وإضافة جديد</small>
+            <small>عرض جميع الدكاترة والمواد التي يدرّسونها وإضافة دكتور جديد</small>
         </div>
         <div class="d-flex align-items-center mt-2 mt-sm-0">
             <span class="count-badge">
@@ -155,7 +153,7 @@
             </span>
             <button class="btn btn-add mr-2" id="btnOpenAdd">
                 <i class="fas fa-plus ml-1"></i>
-                إضافة دكتور لمادة
+                إضافة دكتور للمادة
             </button>
         </div>
     </div>
@@ -222,13 +220,10 @@
         <div class="modal-content" style="border-radius:10px; overflow:hidden;">
 
             <div class="modal-header">
-                <!-- X on the LEFT in RTL (order:-1 + margin-right:auto) -->
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+               
                 <h5 class="modal-title" id="addModalLabel">
                     <i id="modalIcon" class="fas fa-user-plus ml-2"></i>
-                    <span id="modalTitleText">إضافة دكتور لمادة</span>
+                    <span id="modalTitleText">إضافة دكتور للمادة</span>
                 </h5>
             </div>
 
@@ -272,9 +267,9 @@
                         </label>
                         <select id="selectSpecialization" class="form-control custom-select">
                             <option value="">-- اختر التخصص --</option>
-                            <option value="CS">CS — علوم الحاسب</option>
-                            <option value="CY">CY — أمن المعلومات</option>
-                            <option value="AI">AI — الذكاء الاصطناعي</option>
+                            <option value="CS">CS — Computer Science</option>
+                            <option value="CY">CY — Cybersecurity</option>
+                            <option value="AI">AI — Artificial Intelligence</option>
                             <option value="CM" style="background-color:#fef9c3; font-weight:700; border-right:4px solid #f59e0b;">⭐ CM — مادة مشتركة</option>
                         </select>
                     </div>
@@ -316,7 +311,7 @@
     </div>
 </div>
 
-<!-- Scripts -->
+
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -341,7 +336,7 @@
     function setModalMode(mode) {
         modalMode = mode;
         if (mode === 'add') {
-            $('#modalTitleText').text('إضافة دكتور لمادة');
+            $('#modalTitleText').text('إضافة دكتور للمادة');
             $('#modalIcon').attr('class', 'fas fa-user-plus ml-2');
             $('#saveBtn').html('<i class="fas fa-save ml-1"></i> حفظ');
         } else {
@@ -364,7 +359,6 @@
             '</td>';
     }
 
-    /* Open Add modal */
     $('#btnOpenAdd').on('click', function () {
         clearModal();
         setModalMode('add');
@@ -374,7 +368,7 @@
         $('#addModal').modal('show');
     });
 
-    /* Edit button (event delegation for dynamically added rows) */
+  
     $(document).on('click', '.btn-edit', function () {
         var tr = $(this).closest('tr');
         editingRow      = tr;
@@ -393,7 +387,7 @@
         $('#addModal').modal('show');
     });
 
-    /* Delete button (event delegation) */
+    /* Delete button */
     $(document).on('click', '.btn-delete', function () {
         var tr         = $(this).closest('tr');
         var doctorId   = tr.data('doctor-id');
