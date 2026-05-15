@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\pc\\.vscode\\Pro-Exam\\pro-exam.csproj": {}
+    "C:\\Users\\pc\\.vscode\\Pro-Exam\\pro-exam.csproj": {}
   },
   "projects": {
-    "c:\\Users\\pc\\.vscode\\Pro-Exam\\pro-exam.csproj": {
+    "C:\\Users\\pc\\.vscode\\Pro-Exam\\pro-exam.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\pc\\.vscode\\Pro-Exam\\pro-exam.csproj",
+        "projectUniqueName": "C:\\Users\\pc\\.vscode\\Pro-Exam\\pro-exam.csproj",
         "projectName": "pro-exam",
-        "projectPath": "c:\\Users\\pc\\.vscode\\Pro-Exam\\pro-exam.csproj",
+        "projectPath": "C:\\Users\\pc\\.vscode\\Pro-Exam\\pro-exam.csproj",
         "packagesPath": "C:\\Users\\pc\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\pc\\.vscode\\Pro-Exam\\obj\\",
+        "outputPath": "C:\\Users\\pc\\.vscode\\Pro-Exam\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

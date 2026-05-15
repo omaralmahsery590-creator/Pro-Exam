@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OfficeOpenXml;
+using OfficeOpenXml;//تُستخدم عادةً إذا كان هناك كود لتصدير أو استيراد ملفات Excel
 using pro_exam.DataBaseContext;
 using pro_exam.Models;
 using pro_exam.ViewModel;
@@ -46,37 +46,48 @@ namespace pro_exam.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddExamAjax([FromBody] pro_exam.ViewModel.AddExamRequest request)
+        public IActionResult AddExamAjax([FromBody] pro_exam.ViewModel.AddExamRequest request)//تُستخدم عادةً إذا كان هناك كود لإضافة امتحان جديد عبر طلب AJAX من الواجهة الأمامية    
         {
             if (request == null)
-                return Json(new { status = "error", message = "بيانات غير صالحة" });
+                return Json(new { status = "error", message = "بيانات غير صالحة" });//التحقق من صحة البيانات الواردة في الطلب
 
-            var course = _context.Courses.Find(request.CourseId);
+            var course = _context.Courses.Find(request.CourseId);//التحقق من وجود المادة الدراسية المحددة في قاعدة البيانات باستخدام معرف المادة (CourseId) المقدم في الطلب
             if (course == null)
-                return Json(new { status = "error", message = "المادة غير موجودة" });
+                return Json(new { status = "error", message = "المادة غير موجودة" });//إذا لم يتم العثور على المادة، يتم إرجاع استجابة JSON تحتوي على حالة "error" ورسالة توضح أن المادة غير موجودة 
 
-            var room = _context.Rooms.Find(request.RoomId);
+            var room = _context.Rooms.Find(request.RoomId);//التحقق من وجود القاعة المحددة في قاعدة البيانات باستخدام معرف القاعة (RoomId) المقدم في الطلب  
             if (room == null)
-                return Json(new { status = "error", message = "القاعة غير موجودة" });
+                return Json(new { status = "error", message = "القاعة غير موجودة" });//إذا لم يتم العثور على القاعة، يتم إرجاع استجابة JSON تحتوي على حالة "error" ورسالة توضح أن القاعة غير موجودة 
 
             if (!TimeSpan.TryParse(request.ExamTime, out TimeSpan examTime))
-                return Json(new { status = "error", message = "وقت الامتحان غير صحيح" });
+                return Json(new { status = "error", message = "وقت الامتحان غير صحيح" });//التحقق من صحة وقت الامتحان المقدم في الطلب، إذا لم يكن الوقت صالحًا، يتم إرجاع استجابة JSON تحتوي على حالة "error" ورسالة توضح أن وقت الامتحان غير صحيح
 
             var examDate = request.ExamDate.Date;
-            var examEndTime = examTime.Add(TimeSpan.FromHours(2));
+
+            if (examDate <= DateTime.Today)//التحقق من أن تاريخ الامتحان هو تاريخ مستقبلي، إذا كان التاريخ يساوي أو أقل من تاريخ اليوم، يتم إرجاع استجابة JSON تحتوي على حالة "error" ورسالة توضح أنه يجب إدخال تاريخ مستقبلي للامتحان  
+              {
+               return Json(new
+              {
+               status = "error",
+                message = "يجب إدخال تاريخ مستقبلي للامتحان"
+              });
+              }
+
+var examEndTime = examTime.Add(TimeSpan.FromHours(2));//حساب وقت نهاية الامتحان بإضافة ساعتين إلى وقت بدء الامتحان، حيث أن كل امتحان يستمر لمدة ساعتين، ويتم استخدام هذا الوقت لاحقًا في التحقق من التعارضات الزمنية مع الامتحانات الأخرى.
+           
 
             // Rule 1: Duplicate exam - same course cannot be scheduled more than once
-            if (_context.Exams.Any(e => e.CourseId == request.CourseId))
+            if (_context.Exams.Any(e => e.CourseId == request.CourseId))//التحقق من وجود امتحان آخر لنفس المادة الدراسية في قاعدة البيانات، إذا تم العثور على امتحان لنفس المادة، يتم إرجاع استجابة JSON تحتوي على حالة "conflict" ورسالة توضح أن هناك تكرارًا وأنه تم جدولة امتحان لهذه المادة مسبقًا
                 return Json(new { status = "conflict", message = "تكرار: تم جدولة امتحان لهذه المادة مسبقاً" });
 
             // Rule 2: Level conflict - max 2 exams per academic level per day
-            int sameLevelCount = _context.Exams.Include(e => e.Course)
+            int sameLevelCount = _context.Exams.Include(e => e.Course)//التحقق من عدد الامتحانات التي تم جدولتها لنفس المستوى الأكاديمي في نفس اليوم، إذا كان عدد الامتحانات لنفس المستوى في نفس اليوم يساوي أو يزيد عن 2، يتم إرجاع استجابة JSON تحتوي على حالة "conflict" ورسالة توضح أن هناك تعارضًا في المستوى وأن الحد الأقصى (2 امتحانات) قد تم الوصول إليه لهذا المستوى في ذلك اليوم  
                 .Count(e => e.ExamDate.Date == examDate && e.Course.Level == course.Level);
-            if (sameLevelCount >= 2)
+            if (sameLevelCount >= 2)//التحقق مما إذا كان عدد الامتحانات لنفس المستوى في نفس اليوم يساوي أو يزيد عن 2، إذا كان الأمر كذلك، يتم إرجاع استجابة JSON تحتوي على حالة "conflict" ورسالة توضح أن هناك تعارضًا في المستوى وأن الحد الأقصى (2 امتحانات) قد تم الوصول إليه لهذا المستوى في ذلك اليوم   
                 return Json(new { status = "conflict", message = $"تعارض المستوى: وصل الحد الأقصى (2 امتحانات) لمستوى {course.Level} في يوم {examDate:yyyy-MM-dd}" });
 
             // Rule 3: Level time conflict - no two exams of the same level overlap within the 2-hour window
-            bool levelTimeConflict = _context.Exams.Include(e => e.Course)
+            bool levelTimeConflict = _context.Exams.Include(e => e.Course)//التحقق مما إذا كان هناك أي امتحان آخر لنفس المستوى الأكاديمي يتداخل زمنياً مع الامتحان الجديد ضمن نافذة زمنية مدتها ساعتان، إذا تم العثور على امتحان يتداخل زمنياً مع الامتحان الجديد لنفس المستوى، يتم إرجاع استجابة JSON تحتوي على حالة "conflict" ورسالة توضح أن هذا الوقت يقع ضمن فترة امتحان آخر مستمر لمدة ساعتين لنفس المستوى  
                 .Any(e => e.ExamDate.Date == examDate && e.StartTime < examEndTime && e.EndTime > examTime && e.Course.Level == course.Level);
             if (levelTimeConflict)
                 return Json(new { status = "conflict", message = $"عذراً، هذا الوقت يقع ضمن فترة امتحان آخر مستمر لمدة ساعتين (المستوى {course.Level})" });
@@ -144,7 +155,7 @@ namespace pro_exam.Controllers
 
             _context.SaveChanges();
 
-            var roomNames = room.Name;
+            var roomNames = room.Name;//إنشاء سلسلة تحتوي على اسم القاعة الأساسية، وإذا كانت هناك قاعات إضافية، يتم إضافتها إلى السلسلة مع علامة "+" للفصل بينها
             if (extraRoomIds.Count > 0)
             {
                 var extraRoomNames = _context.Rooms.Where(r => extraRoomIds.Contains(r.Id)).Select(r => r.Name).ToList();
@@ -196,8 +207,18 @@ namespace pro_exam.Controllers
             if (!TimeSpan.TryParse(request.ExamTime, out TimeSpan examTime))
                 return Json(new { status = "error", message = "وقت الامتحان غير صحيح" });
 
-            var examDate = request.ExamDate.Date;
-            var examEndTime = examTime.Add(TimeSpan.FromHours(2));
+                var examDate = request.ExamDate.Date;
+
+               if (examDate <= DateTime.Today)
+                 {
+                   return Json(new
+                 {
+                  status = "error",
+                  message = "يجب إدخال تاريخ مستقبلي للامتحان"
+                   });
+                  }
+
+var examEndTime = examTime.Add(TimeSpan.FromHours(2));
 
             // Rule 1: Duplicate exam (exclude current exam)
             if (_context.Exams.Any(e => e.CourseId == request.CourseId && e.Id != request.ExamId))
@@ -283,9 +304,10 @@ namespace pro_exam.Controllers
             return Json(new { status = "success", message = "تم تعديل الامتحان بنجاح في: " + roomNames });
         }
 
-        public IActionResult StudentExamSchedule()
+        public IActionResult StudentExamSchedule()//تُستخدم عادةً إذا كان هناك كود لعرض جدول امتحانات الطلاب، حيث يتم جمع بيانات الامتحانات المسجلة لكل طالب وعرضها بطريقة منظمة في الواجهة الأمامية
         {
-            var examMap = _context.Exams
+            var examMap = _context.Exams//إنشاء قاموس (Dictionary) لربط معرف المادة الدراسية (CourseId) ببيانات الامتحان المرتبطة بها، حيث يتم جلب جميع الامتحانات من قاعدة البيانات مع تضمين بيانات المادة الدراسية والقاعة والقاعات الإضافية، ويتم تحويل النتيجة إلى قاموس يسهل الوصول إليه لاحقًا عند بناء جدول امتحانات الطلاب
+                .Include(e => e.Course)
                 .Include(e => e.Room)
                 .Include(e => e.ExtraRooms).ThenInclude(er => er.Room)
                 .ToDictionary(e => e.CourseId);

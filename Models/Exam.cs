@@ -13,7 +13,9 @@ namespace pro_exam.Models
         public Room Room { get; set; }
 
         [Required]
+        [FutureDate(ErrorMessage = "يجب إدخال تاريخ مستقبلي للامتحان")]
         public DateTime ExamDate { get; set; }
+
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
 
